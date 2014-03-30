@@ -4,34 +4,56 @@
 %left "^"
 %left UMINUS
 
-%start expressions
+%start program
 
 %% /* language grammar */
 
-expressions
-	: e EOF
-		{console.log($1); return $1;}
+program
+	: block EOF
+		{return $1;}
 	;
 
-e
-	: e "+" e
-		{$$ = $1 + $3;}
-	| e "-" e
-		{$$ = $1 - $3;}
-	| e "*" e
-		{$$ = $1 * $3;}
-	| e "/" e
-		{$$ = $1 / $3;}
-	| e "^" e
-		{$$ = Math.pow($1, $3);}
-	| "-" e %prec UMINUS
-		{$$ = -$2;}
-	| "(" e ")"
-		{$$ = $2;}
+block
+	: /* nothing */
+		{	$$ = new yy.nodes.Block(); }
+	| block expression
+		{	$1.push($2);
+			$$ = $1; }
+	;
+
+expression
+	: functionDeclaration
+		{$$ = $1;}
+	| functionCall
+		{$$ = $1;}
 	| NUMBER
-		{$$ = Number(yytext);}
-	| E
-		{$$ = Math.E;}
-	| PI
-		{$$ = Math.PI;}
+		{$$ = new yy.nodes.Number($1);}
+	| assignment
+		{$$ = $1;}
+	;
+
+functionDeclaration
+	: FUNCTION "(" ")" "{" block "}"
+		{$$ = new yy.nodes.FunctionDeclaration($5);}
+	;
+
+assignment
+	: IDENT "=" expression
+		{$$ = new yy.nodes.Assignment($1, $3);}
+	;
+
+functionCall
+	: IDENT "(" functionCallParams ")"
+		{$$ = new yy.nodes.FunctionCall($1, $3);}
+	;
+
+functionCallParams
+	: /* nothing */
+		{	$$ = new yy.nodes.FunctionCallParamList();}
+	| expression
+		{	$$ = new yy.nodes.FunctionCallParamList();
+			$$.push($1);	}
+	| functionCallParams "," expression
+		{	$1.push($2);
+			$$ = $1; }
 	;
