@@ -30,11 +30,24 @@ expression
 		{$$ = new yy.nodes.Number($1);}
 	| assignment
 		{$$ = $1;}
+	| IDENT
+		{$$ = new yy.nodes.Identifier($1);}
 	;
 
 functionDeclaration
-	: FUNCTION "(" ")" "{" block "}"
-		{$$ = new yy.nodes.FunctionDeclaration($5);}
+	: FUNCTION "(" functionDeclarationParams ")" "{" block "}"
+		{$$ = new yy.nodes.FunctionDeclaration($3, $6);}
+	;
+
+functionDeclarationParams
+	: /* nothing */
+		{	$$ = new yy.nodes.FunctionDeclarationParamList(); }
+	| IDENT
+		{	$$ = new yy.nodes.FunctionDeclarationParamList();
+			$$.push($1); }
+	| functionDeclarationParams "," IDENT
+		{	$1.push($2);
+			$$ = $1; }
 	;
 
 assignment

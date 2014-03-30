@@ -1,5 +1,5 @@
-foo = function() {
-	console.log(1)
+foo = function(a) {
+	console.log(a)
 }
 
-foo()
+foo(1)

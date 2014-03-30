@@ -1,3 +1,9 @@
+class exports.Identifier
+	constructor: (@name) ->
+
+	genCode: ->
+		@name
+
 class exports.FunctionCall
 	constructor: (@functionName, @params) ->
 
@@ -12,11 +18,7 @@ class exports.FunctionCallParamList
 		@params.push param
 
 	genCode: ->
-		s = ""
-		for param, index in @params
-			s += param.genCode()
-			s += ", " if index < @params.length - 1
-		return s
+		@params.map((param) -> param.genCode()).join(", ")
 
 class exports.Number
 	constructor: (@number) ->
@@ -31,9 +33,20 @@ class exports.Assignment
 		"(#{@identifier} = #{@value.genCode()})"
 
 class exports.FunctionDeclaration
-	constructor: (@body) ->
+	constructor: (@params, @body) ->
+
 	genCode: ->
-		"function(){#{@body.genCode()}}"
+		"function(#{@params.genCode()}){#{@body.genCode()}}"
+
+class exports.FunctionDeclarationParamList
+	constructor: ->
+		@params = []
+
+	push: (param) ->
+		@params.push param
+
+	genCode: ->
+		@params.join(", ")
 
 class exports.Block
 	constructor: ->
