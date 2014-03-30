@@ -1,4 +1,4 @@
-foo = function(a) {
+foo = (a) -> {
 	console.log(a)
 }
 

@@ -35,8 +35,8 @@ expression
 	;
 
 functionDeclaration
-	: FUNCTION "(" functionDeclarationParams ")" "{" block "}"
-		{$$ = new yy.nodes.FunctionDeclaration($3, $6);}
+	: "(" functionDeclarationParams ")" "->" "{" block "}"
+		{$$ = new yy.nodes.FunctionDeclaration($2, $6);}
 	;
 
 functionDeclarationParams
