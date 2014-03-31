@@ -1,5 +1,6 @@
-foo = (a) -> {
+foo = (a) ->
 	console.log(a)
-}
+
+bar = (a) -> console.log(a)
 
 foo(1)

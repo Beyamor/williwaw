@@ -18,7 +18,7 @@ task "build", "Build bin/ from src/", (callback) ->
 task "watch", "Watch src/ for changes", (callback) ->
 	coffee = spawnAndWatch "coffee", ["-w", "-c", "-o", "bin", "src"]
 
-	parserFiles = ["src/heson.jison", "src/heson.jisonlex"]
+	parserFiles = ["src/heson.jison"] #, "src/heson.jisonlex"]
 	parseBuilderCommands = ["-o", "bin/heson.js"].concat parserFiles
 
 	rebuildParser = ->

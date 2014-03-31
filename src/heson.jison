@@ -16,9 +16,16 @@ program
 block
 	: /* nothing */
 		{	$$ = new yy.nodes.Block(); }
-	| block expression
+	| block terminatedExpression
 		{	$1.push($2);
 			$$ = $1; }
+	| block NEWLINE
+		{	$$ = $1; }
+	;
+
+terminatedExpression
+	: expression NEWLINE
+		{$$ = $1;}
 	;
 
 expression
@@ -30,33 +37,35 @@ expression
 		{$$ = new yy.nodes.Number($1);}
 	| assignment
 		{$$ = $1;}
-	| IDENT
+	| IDENTIFIER
 		{$$ = new yy.nodes.Identifier($1);}
 	;
 
 functionDeclaration
-	: "(" functionDeclarationParams ")" "->" "{" block "}"
-		{$$ = new yy.nodes.FunctionDeclaration($2, $6);}
+	: "(" functionDeclarationParams ")" "->" "NEWLINE" "{" block "}"
+		{$$ = new yy.nodes.FunctionDeclaration($2, $7);}
+	| "(" functionDeclarationParams ")" "->" terminatedExpression
+		{$$ = new yy.nodes.FunctionDeclaration($2, $5);}
 	;
 
 functionDeclarationParams
 	: /* nothing */
 		{	$$ = new yy.nodes.FunctionDeclarationParamList(); }
-	| IDENT
+	| IDENTIFIER
 		{	$$ = new yy.nodes.FunctionDeclarationParamList();
 			$$.push($1); }
-	| functionDeclarationParams "," IDENT
+	| functionDeclarationParams "," IDENTIFIER
 		{	$1.push($2);
 			$$ = $1; }
 	;
 
 assignment
-	: IDENT "=" expression
+	: IDENTIFIER "=" expression
 		{$$ = new yy.nodes.Assignment($1, $3);}
 	;
 
 functionCall
-	: IDENT "(" functionCallParams ")"
+	: IDENTIFIER "(" functionCallParams ")"
 		{$$ = new yy.nodes.FunctionCall($1, $3);}
 	;
 
