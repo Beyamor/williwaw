@@ -1,5 +1,5 @@
 fs		= require "fs"
-{parser}	= require "./heson"
+{parser}	= require "./parser"
 nodes		= require "./nodes"
 lexer		= require "./lexer"
 

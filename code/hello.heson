@@ -4,3 +4,4 @@ foo = (a) ->
 bar = (a) -> console.log(a)
 
 foo(1)
+bar(2)
