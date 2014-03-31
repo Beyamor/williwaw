@@ -44,7 +44,7 @@ expression
 	;
 
 functionDeclaration
-	: "(" functionDeclarationParams ")" "->" "NEWLINE" "{" block "}"
+	: "(" functionDeclarationParams ")" "->" "NEWLINE" "INDENT" block "DEDENT"
 		{$$ = new yy.nodes.FunctionDeclaration($2, $7);}
 	| "(" functionDeclarationParams ")" "->" terminatedExpression
 		{$$ = new yy.nodes.FunctionDeclaration($2, $5);}

@@ -20,12 +20,12 @@ lexer.addRule /^	*/gm, (text) ->
 
 	if indentation > indent[0]
 		indent.unshift indentation
-		return "{"
+		return "INDENT"
 
 	tokens = []
 
 	while indentation < indent[0]
-		tokens.push "}"
+		tokens.push "DEDENT"
 		indent.shift()
 
 	return tokens if tokens.length isnt 0
