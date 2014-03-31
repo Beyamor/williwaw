@@ -35,6 +35,8 @@ expression
 		{$$ = $1;}
 	| NUMBER
 		{$$ = new yy.nodes.Number($1);}
+	| STRING
+		{$$ = new yy.nodes.String($1.substring(1, $1.length - 1));}
 	| assignment
 		{$$ = $1;}
 	| IDENTIFIER

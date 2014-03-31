@@ -20,6 +20,12 @@ class exports.FunctionCallParamList
 	genCode: ->
 		@params.map((param) -> param.genCode()).join(", ")
 
+class exports.String
+	constructor: (@contents) ->
+
+	genCode: ->
+		"\"#{@contents}\""
+
 class exports.Number
 	constructor: (@number) ->
 
