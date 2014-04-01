@@ -41,6 +41,8 @@ expression
 		{$$ = $1;}
 	| IDENTIFIER
 		{$$ = new yy.nodes.Identifier($1);}
+	| objectLiteral
+		{$$ = $1;}
 	;
 
 functionDeclaration
@@ -80,4 +82,24 @@ functionCallParams
 	| functionCallParams "," expression
 		{	$1.push($2);
 			$$ = $1; }
+	;
+
+objectLiteral
+	: "{" "}"
+		{	$$ = new yy.nodes.ObjectLiteral([]); }
+	| "{" NEWLINE INDENT objectPropertyList NEWLINE DEDENT "}"
+		{	$$ = new yy.nodes.ObjectLiteral($4); }
+	;
+
+objectPropertyList
+	: objectProperty
+		{	$$ = [$1]; }
+	| objectPropertyList NEWLINE objectProperty
+		{	$$ = $1;
+			$$.push($3); }
+	;
+
+objectProperty
+	: IDENTIFIER ":" expression
+		{	$$ = {property: $1, value: $3}; }
 	;

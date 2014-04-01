@@ -3,5 +3,10 @@ foo = (a) ->
 
 bar = (a) -> console.log(a)
 
-foo(1)
-bar("derp")
+o = {
+	x:	1
+	y:	"derp"
+}
+
+foo(o.x)
+bar(o.y)

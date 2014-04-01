@@ -30,7 +30,7 @@ lexer.addRule /^	*/gm, (text) ->
 
 	return tokens if tokens.length isnt 0
 
-addRule " +"
+addRule "[ 	]+"
 
 addRule "\n", "NEWLINE"
 addRule "[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)*", "IDENTIFIER"
@@ -41,4 +41,7 @@ addRule "->", "->"
 addRule "=", "="
 addRule ",", ","
 addRule "$", "EOF"
+addRule "\\{", "{"
+addRule "\\}", "}"
+addRule ":", ":"
 addRule "\".*\"", "STRING"

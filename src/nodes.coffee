@@ -66,3 +66,14 @@ class exports.Block
 		for expression in @expressions
 			s += "#{expression.genCode()};\n"
 		return s
+
+class exports.ObjectLiteral
+	constructor: (@properties) ->
+
+	genCode: ->
+		s = "{"
+		for {property, value}, index in @properties
+			s += "#{property}: #{value.genCode()}"
+			s += ", " if index < @properties.length - 1
+		s += "}"
+		return s
