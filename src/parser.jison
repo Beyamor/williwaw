@@ -9,7 +9,7 @@
 %% /* language grammar */
 
 module
-	: block EOF
+	: block
 		{	return new yy.nodes.Module($1); }
 	;
 
@@ -19,7 +19,7 @@ block
 	| block require
 		{	$1.push($2);
 			$$ = $1; }
-	| block expression
+	| block terminatedExpression
 		{	$1.push($2);
 			$$ = $1; }
 	| block NEWLINE
@@ -33,6 +33,8 @@ require
 
 terminatedExpression
 	: expression NEWLINE
+		{$$ = $1;}
+	: expression EOF
 		{$$ = $1;}
 	;
 
