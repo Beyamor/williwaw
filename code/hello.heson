@@ -2,6 +2,7 @@ require "cli-color" as colors
 
 foo = (a) ->
 	console.log(a)
+	require "express" as express
 
 bar = (a) -> console.log(a)
 

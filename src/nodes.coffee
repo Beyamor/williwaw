@@ -8,6 +8,7 @@ class exports.Module
 			if expression instanceof exports.Require
 				modulePaths.push expression.path
 				moduleBindings.push expression.binding
+				expression.evaluatedAtTopLevel = true
 				
 		return """
 		define([#{modulePaths.join(", ")}],
@@ -21,7 +22,10 @@ class exports.Require
 	constructor: (@path, @binding) ->
 
 	genCode: ->
-		""
+		if @evaluatedAtTopLevel
+			""
+		else
+			"#{@binding} = require(#{@path})"
 
 class exports.Identifier
 	constructor: (@name) ->
