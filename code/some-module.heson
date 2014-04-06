@@ -1,0 +1,2 @@
+someFunction = () ->
+	console.log("a function from some module")

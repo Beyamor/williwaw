@@ -1,4 +1,5 @@
 require "cli-color" as colors
+require "some-module" as someModule
 
 foo = (a) ->
 	console.log(a)
@@ -15,3 +16,5 @@ foo(o.x)
 bar(o.y)
 
 console.log(colors.red("check these colours"))
+
+someModule.someFunction()

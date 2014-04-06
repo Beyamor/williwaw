@@ -5,6 +5,7 @@ class exports.Module
 		modulePaths	= []
 		moduleBindings	= []
 		for expression in @contents.expressions
+			expression.isTopLevel = true
 			if expression instanceof exports.Require
 				modulePaths.push expression.path
 				moduleBindings.push expression.binding
@@ -13,7 +14,9 @@ class exports.Module
 		return """
 		define([#{modulePaths.join(", ")}],
 			function(#{moduleBindings.join(", ")}) {
+				var __heson_exports = {};
 				#{@contents.genCode()}
+				return __heson_exports;
 			}
 		);
 		"""
@@ -65,7 +68,10 @@ class exports.Assignment
 	constructor: (@identifier, @value) ->
 
 	genCode: ->
-		"(#{@identifier} = #{@value.genCode()})"
+		if @isTopLevel
+			"(__heson_exports[\"#{@identifier}\"] = #{@identifier} = #{@value.genCode()})"
+		else
+			"(#{@identifier} = #{@value.genCode()})"
 
 class exports.FunctionDeclaration
 	constructor: (@params, @body) ->

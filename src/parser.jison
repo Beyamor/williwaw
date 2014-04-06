@@ -19,7 +19,7 @@ block
 	| block require
 		{	$1.push($2);
 			$$ = $1; }
-	| block terminatedExpression
+	| block expression
 		{	$1.push($2);
 			$$ = $1; }
 	| block NEWLINE
