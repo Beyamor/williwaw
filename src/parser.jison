@@ -9,8 +9,23 @@
 %% /* language grammar */
 
 module
-	: block
+	: topLevelBlock
 		{	return new yy.nodes.Module($1); }
+	;
+
+topLevelBlock
+	: /* nothing */
+		{	$$ = new yy.nodes.Block(); }
+	| topLevelBlock topLevelRequire
+		{	$1.push($2);
+			$$ = $1; }
+	| topLevelBlock terminatedTopLevelExpression
+		{	$1.push($2);
+			$$ = $1; }
+	| topLevelBlock NEWLINE
+		{	$$ = $1; }
+	| topLevelBlock EOF
+		{	$$ = $1; }
 	;
 
 block
@@ -26,19 +41,43 @@ block
 		{	$$ = $1; }
 	;
 
+topLevelRequire
+	: REQUIRE STRING AS IDENTIFIER
+		{	$$ = new yy.nodes.TopLevelRequire($2, $4); }
+	;
+
 require
 	: REQUIRE STRING AS IDENTIFIER
 		{	$$ = new yy.nodes.Require($2, $4); }
 	;
 
-terminatedExpression
-	: expression NEWLINE
+terminatedTopLevelExpression
+	: topLevelExpression NEWLINE
 		{$$ = $1;}
-	: expression EOF
+	| topLevelExpression EOF
 		{$$ = $1;}
 	;
 
+terminatedExpression
+	: expression NEWLINE
+		{$$ = $1;}
+	;
+
+topLevelExpression
+	: topLevelAssignment
+		{	$$ = $1; }
+	| nonAssignmentExpression
+		{	$$ = $1; }
+	;
+
 expression
+	: assignment
+		{	$$ = $1; }
+	| nonAssignmentExpression
+		{	$$ = $1; }
+	;
+
+nonAssignmentExpression
 	: functionDeclaration
 		{$$ = $1;}
 	| functionCall
@@ -47,8 +86,6 @@ expression
 		{$$ = new yy.nodes.Number($1);}
 	| STRING
 		{$$ = new yy.nodes.String($1.substring(1, $1.length - 1));}
-	| assignment
-		{$$ = $1;}
 	| IDENTIFIER
 		{$$ = new yy.nodes.Identifier($1);}
 	| objectLiteral
@@ -71,6 +108,11 @@ functionDeclarationParams
 	| functionDeclarationParams "," IDENTIFIER
 		{	$1.push($2);
 			$$ = $1; }
+	;
+
+topLevelAssignment
+	: IDENTIFIER "=" expression
+		{	$$ = new yy.nodes.TopLevelAssignment($1, $3); }
 	;
 
 assignment

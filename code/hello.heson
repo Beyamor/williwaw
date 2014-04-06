@@ -4,6 +4,7 @@ require "some-module" as someModule
 foo = (a) ->
 	console.log(a)
 	require "express" as express
+	baz = express
 
 bar = (a) -> console.log(a)
 
@@ -18,3 +19,4 @@ bar(o.y)
 console.log(colors.red("check these colours"))
 
 someModule.someFunction()
+

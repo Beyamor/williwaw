@@ -5,11 +5,9 @@ class exports.Module
 		modulePaths	= []
 		moduleBindings	= []
 		for expression in @contents.expressions
-			expression.isTopLevel = true
-			if expression instanceof exports.Require
+			if expression instanceof exports.TopLevelRequire
 				modulePaths.push expression.path
 				moduleBindings.push expression.binding
-				expression.evaluatedAtTopLevel = true
 				
 		return """
 		define([#{modulePaths.join(", ")}],
@@ -21,14 +19,17 @@ class exports.Module
 		);
 		"""
 
+class exports.TopLevelRequire
+	constructor: (@path, @binding) ->
+
+	genCode: ->
+		""
+
 class exports.Require
 	constructor: (@path, @binding) ->
 
 	genCode: ->
-		if @evaluatedAtTopLevel
-			""
-		else
-			"#{@binding} = require(#{@path})"
+		"#{@binding} = require(#{@path})"
 
 class exports.Identifier
 	constructor: (@name) ->
@@ -64,20 +65,27 @@ class exports.Number
 	genCode: ->
 		@number
 
+class exports.TopLevelAssignment
+	constructor: (@identifier, @value) ->
+
+	genCode: ->
+		"(__heson_exports[\"#{@identifier}\"] = #{@identifier} = #{@value.genCode()})"
+
 class exports.Assignment
 	constructor: (@identifier, @value) ->
 
 	genCode: ->
-		if @isTopLevel
-			"(__heson_exports[\"#{@identifier}\"] = #{@identifier} = #{@value.genCode()})"
-		else
-			"(#{@identifier} = #{@value.genCode()})"
+		"(#{@identifier} = #{@value.genCode()})"
 
 class exports.FunctionDeclaration
 	constructor: (@params, @body) ->
 
 	genCode: ->
-		"function(#{@params.genCode()}){#{@body.genCode()}}"
+		"""
+		function(#{@params.genCode()}) {
+			#{@body.genCode()}
+		}
+		"""
 
 class exports.FunctionDeclarationParamList
 	constructor: ->
