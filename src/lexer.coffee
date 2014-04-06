@@ -33,7 +33,7 @@ lexer.addRule /^	*/gm, (text) ->
 addRule "[ 	]+"
 
 addRule "\n", ->
-	@yylineno or= 0
+	@yylineno = 0 unless @yylineno?
 	@yylineno++
 	"NEWLINE"
 addRule "require", "REQUIRE"

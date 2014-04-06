@@ -1,3 +1,6 @@
+genCommaSeparatedCode = (forms) ->
+	forms.map((form) -> form.genCode()).join(", ")
+
 class exports.Module
 	constructor: (@contents) ->
 
@@ -10,8 +13,8 @@ class exports.Module
 				moduleBindings.push expression.binding
 				
 		return """
-		define([#{modulePaths.join(", ")}],
-			function(#{moduleBindings.join(", ")}) {
+		define([#{genCommaSeparatedCode modulePaths}],
+			function(#{genCommaSeparatedCode moduleBindings}) {
 				var __heson_exports = {};
 				#{@contents.genCode()}
 				return __heson_exports;
@@ -29,7 +32,7 @@ class exports.Require
 	constructor: (@path, @binding) ->
 
 	genCode: ->
-		"#{@binding} = require(#{@path})"
+		"#{@binding.genCode()} = require(#{@path.genCode()})"
 
 class exports.Identifier
 	constructor: (@name) ->
@@ -41,9 +44,9 @@ class exports.FunctionCall
 	constructor: (@functionName, @params) ->
 
 	genCode: ->
-		"#{@functionName}(#{@params.genCode()})"
+		"#{@functionName.genCode()}(#{@params.genCode()})"
 
-class exports.FunctionCallParamList
+class exports.ExpressionList
 	constructor: ->
 		@params = []
 
@@ -51,7 +54,7 @@ class exports.FunctionCallParamList
 		@params.push param
 
 	genCode: ->
-		@params.map((param) -> param.genCode()).join(", ")
+		genCommaSeparatedCode @params
 
 class exports.String
 	constructor: (@contents) ->
@@ -69,13 +72,13 @@ class exports.TopLevelAssignment
 	constructor: (@identifier, @value) ->
 
 	genCode: ->
-		"(__heson_exports[\"#{@identifier}\"] = #{@identifier} = #{@value.genCode()})"
+		"(__heson_exports[\"#{@identifier.genCode()}\"] = #{@identifier.genCode()} = #{@value.genCode()})"
 
 class exports.Assignment
 	constructor: (@identifier, @value) ->
 
 	genCode: ->
-		"(#{@identifier} = #{@value.genCode()})"
+		"(#{@identifier.genCode()} = #{@value.genCode()})"
 
 class exports.FunctionDeclaration
 	constructor: (@params, @body) ->
@@ -87,7 +90,7 @@ class exports.FunctionDeclaration
 		}
 		"""
 
-class exports.FunctionDeclarationParamList
+class exports.IdentifierList
 	constructor: ->
 		@params = []
 
@@ -95,7 +98,7 @@ class exports.FunctionDeclarationParamList
 		@params.push param
 
 	genCode: ->
-		@params.join(", ")
+		genCommaSeparatedCode @params
 
 class exports.Block
 	constructor: ->
@@ -107,7 +110,8 @@ class exports.Block
 	genCode: ->
 		s = ""
 		for expression in @expressions
-			s += "#{expression.genCode()};\n"
+			code = expression.genCode()
+			s += "#{code};\n" if code.trim().length > 0
 		return s
 
 class exports.ObjectLiteral
@@ -116,7 +120,7 @@ class exports.ObjectLiteral
 	genCode: ->
 		s = "{"
 		for {property, value}, index in @properties
-			s += "#{property}: #{value.genCode()}"
+			s += "#{property.genCode()}: #{value.genCode()}"
 			s += ", " if index < @properties.length - 1
 		s += "}"
 		return s
