@@ -2,20 +2,26 @@ class exports.Module
 	constructor: (@contents) ->
 
 	genCode: ->
-		"""
-		({define: typeof define === "function"
-				? define
-				: function(f) { f(require, exports, module) } }).
-		define(function(__require, __exports, __module) {
-			#{@contents.genCode()}
-		});
+		modulePaths	= []
+		moduleBindings	= []
+		for expression in @contents.expressions
+			if expression instanceof exports.Require
+				modulePaths.push expression.path
+				moduleBindings.push expression.binding
+				
+		return """
+		define([#{modulePaths.join(", ")}],
+			function(#{moduleBindings.join(", ")}) {
+				#{@contents.genCode()}
+			}
+		);
 		"""
 
 class exports.Require
 	constructor: (@path, @binding) ->
 
 	genCode: ->
-		"(#{@binding} = __require(#{@path}))"
+		""
 
 class exports.Identifier
 	constructor: (@name) ->
