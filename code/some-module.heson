@@ -1,2 +1,3 @@
-someFunction = () ->
+someFunction = fn()
 	console.log("a function from some module")
+

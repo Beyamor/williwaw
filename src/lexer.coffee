@@ -36,13 +36,13 @@ addRule "\n", ->
 	@yylineno = 0 unless @yylineno?
 	@yylineno++
 	"NEWLINE"
+addRule "fn", "FN"
 addRule "require", "REQUIRE"
 addRule "as", "AS"
 addRule "[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)*", "IDENTIFIER"
 addRule "[0-9]+(\\.[0-9]+)?", "NUMBER"
 addRule "\\(", "("
 addRule "\\)", ")"
-addRule "->", "->"
 addRule "=", "="
 addRule ",", ","
 addRule "$", "EOF"

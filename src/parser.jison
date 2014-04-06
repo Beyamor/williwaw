@@ -3,7 +3,7 @@
 %left "*" "/"
 %left "^"
 %left UMINUS
-%left "("
+%nonassoc "("
 
 %start module
 
@@ -62,8 +62,8 @@ function_call
 	;
 
 function_declaration
-	: identifier_tuple "->" block
-		{	$$ = new yy.nodes.FunctionDeclaration($1, $3); }
+	: FN identifier_tuple block
+		{	$$ = new yy.nodes.FunctionDeclaration($2, $3); }
 	;
 
 property
@@ -99,6 +99,8 @@ expression
 	| function_declaration
 	| object_literal
 	| binary_operation
+	| "(" expression ")"
+		{	$$ = $2; }
 	;
 
 assignment

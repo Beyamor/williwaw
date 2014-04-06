@@ -1,12 +1,12 @@
 require "cli-color" as colors
 require "some-module" as someModule
 
-foo = (a) ->
+foo = fn(a) 
 	console.log(a)
 	require "express" as express
 	baz = express
 
-bar = (a) -> console.log(a)
+bar = fn(a) console.log(a)
 
 o = {
 	x:	1
@@ -21,3 +21,4 @@ console.log(colors.red("check these colours"))
 someModule.someFunction()
 
 console.log(1 + 2 * 3)
+console.log((1 + 2) * 3)
