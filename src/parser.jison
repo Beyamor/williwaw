@@ -23,9 +23,7 @@ topLevelBlock
 		{	$1.push($2);
 			$$ = $1; }
 	| topLevelBlock NEWLINE
-		{	$$ = $1; }
 	| topLevelBlock EOF
-		{	$$ = $1; }
 	;
 
 block
@@ -38,7 +36,6 @@ block
 		{	$1.push($2);
 			$$ = $1; }
 	| block NEWLINE
-		{	$$ = $1; }
 	;
 
 topLevelRequire
@@ -53,35 +50,26 @@ require
 
 terminatedTopLevelExpression
 	: topLevelExpression NEWLINE
-		{$$ = $1;}
 	| topLevelExpression EOF
-		{$$ = $1;}
 	;
 
 terminatedExpression
 	: expression NEWLINE
-		{$$ = $1;}
 	;
 
 topLevelExpression
 	: topLevelAssignment
-		{	$$ = $1; }
 	| nonAssignmentExpression
-		{	$$ = $1; }
 	;
 
 expression
 	: assignment
-		{	$$ = $1; }
 	| nonAssignmentExpression
-		{	$$ = $1; }
 	;
 
 nonAssignmentExpression
 	: functionDeclaration
-		{$$ = $1;}
 	| functionCall
-		{$$ = $1;}
 	| NUMBER
 		{$$ = new yy.nodes.Number($1);}
 	| STRING
@@ -89,7 +77,6 @@ nonAssignmentExpression
 	| IDENTIFIER
 		{$$ = new yy.nodes.Identifier($1);}
 	| objectLiteral
-		{$$ = $1;}
 	;
 
 functionDeclaration
