@@ -11,15 +11,15 @@ spawnAndWatch = (name, args) ->
 	child.on "exit", (code) ->
 		callback?() if code is 0
 
+parserFiles = ["src/parser.jison"] #, "src/heson.jisonlex"]
+parseBuilderCommands = ["-o", "js/parser.js"].concat parserFiles
 
-task "build", "Build bin/ from src/", (callback) ->
-	coffee = spawnAndWatch "coffee", ["-c", "-o", "bin", "src"]
+task "build", "Build hs/ from src/", (callback) ->
+	spawnAndWatch "coffee", ["-c", "-o", "js", "src"]
+	spawnAndWatch "jison", parseBuilderCommands
 	
 task "watch", "Watch src/ for changes", (callback) ->
-	coffee = spawnAndWatch "coffee", ["-w", "-c", "-o", "bin", "src"]
-
-	parserFiles = ["src/parser.jison"] #, "src/heson.jisonlex"]
-	parseBuilderCommands = ["-o", "bin/parser.js"].concat parserFiles
+	coffee = spawnAndWatch "coffee", ["-w", "-c", "-o", "js", "src"]
 
 	rebuildParser = ->
 		spawnAndWatch "jison", parseBuilderCommands

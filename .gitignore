@@ -1,3 +1,4 @@
 /bin/
+/js/
 *.sw[op]
 src/lexer-test.coffee
