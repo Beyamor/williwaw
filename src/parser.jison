@@ -3,6 +3,7 @@
 %left "*" "/"
 %left "^"
 %left UMINUS
+%left "("
 
 %start module
 
@@ -83,6 +84,13 @@ object_literal
 		{	$$ = new yy.nodes.ObjectLiteral($4); }
 	;
 
+binary_operation
+	: expression "+" expression { $$ = new yy.nodes.BinaryOperation($1, "+", $3); }
+	| expression "-" expression { $$ = new yy.nodes.BinaryOperation($1, "-", $3); }
+	| expression "*" expression { $$ = new yy.nodes.BinaryOperation($1, "*", $3); }
+	| expression "/" expression { $$ = new yy.nodes.BinaryOperation($1, "/", $3); }
+	;
+
 expression
 	: number
 	| string
@@ -90,6 +98,7 @@ expression
 	| function_call
 	| function_declaration
 	| object_literal
+	| binary_operation
 	;
 
 assignment

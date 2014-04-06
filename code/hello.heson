@@ -20,3 +20,4 @@ console.log(colors.red("check these colours"))
 
 someModule.someFunction()
 
+console.log(1 + 2 * 3)

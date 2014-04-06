@@ -124,3 +124,9 @@ class exports.ObjectLiteral
 			s += ", " if index < @properties.length - 1
 		s += "}"
 		return s
+
+class exports.BinaryOperation
+	constructor: (@lhs, @op, @rhs) ->
+
+	genCode: ->
+		"(#{@lhs.genCode()} #{@op} #{@rhs.genCode()})"
