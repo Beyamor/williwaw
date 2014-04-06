@@ -11,6 +11,12 @@ class exports.Module
 		});
 		"""
 
+class exports.Require
+	constructor: (@path, @binding) ->
+
+	genCode: ->
+		"(#{@binding} = __require(#{@path}))"
+
 class exports.Identifier
 	constructor: (@name) ->
 

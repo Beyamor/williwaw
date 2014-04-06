@@ -33,6 +33,8 @@ lexer.addRule /^	*/gm, (text) ->
 addRule "[ 	]+"
 
 addRule "\n", "NEWLINE"
+addRule "require", "REQUIRE"
+addRule "as", "AS"
 addRule "[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)*", "IDENTIFIER"
 addRule "[0-9]+(\\.[0-9]+)?", "NUMBER"
 addRule "\\(", "("

@@ -16,11 +16,19 @@ module
 block
 	: /* nothing */
 		{	$$ = new yy.nodes.Block(); }
+	| block require
+		{	$1.push($2);
+			$$ = $1; }
 	| block terminatedExpression
 		{	$1.push($2);
 			$$ = $1; }
 	| block NEWLINE
 		{	$$ = $1; }
+	;
+
+require
+	: REQUIRE STRING AS IDENTIFIER
+		{	$$ = new yy.nodes.Require($2, $4); }
 	;
 
 terminatedExpression
