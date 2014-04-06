@@ -1,3 +1,16 @@
+class exports.Module
+	constructor: (@contents) ->
+
+	genCode: ->
+		"""
+		({define: typeof define === "function"
+				? define
+				: function(f) { f(require, exports, module) } }).
+		define(function(__require, __exports, __module) {
+			#{@contents.genCode()}
+		});
+		"""
+
 class exports.Identifier
 	constructor: (@name) ->
 

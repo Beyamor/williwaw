@@ -4,13 +4,13 @@
 %left "^"
 %left UMINUS
 
-%start program
+%start module
 
 %% /* language grammar */
 
-program
+module
 	: block EOF
-		{return $1;}
+		{	return new yy.nodes.Module($1); }
 	;
 
 block
