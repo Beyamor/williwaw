@@ -49,10 +49,12 @@ comma_separated_identifiers
 			$$.push($3); }
 	;
 
-identifier_tuple
-	: "(" ")"
+function_parameter_declaration
+	: "->"
 		{	$$ = new yy.nodes.IdentifierList(); }
-	| "(" comma_separated_identifiers ")"
+	| "\" "->"
+		{	$$ = new yy.nodes.IdentifierList(); }
+	| "\" comma_separated_identifiers "->"
 		{	$$ = $2; }
 	;
 
@@ -62,8 +64,8 @@ function_call
 	;
 
 function_declaration
-	: FN identifier_tuple block
-		{	$$ = new yy.nodes.FunctionDeclaration($2, $3); }
+	: function_parameter_declaration block
+		{	$$ = new yy.nodes.FunctionDeclaration($1, $2); }
 	;
 
 property
