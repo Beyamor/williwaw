@@ -1,4 +1,6 @@
 /* operator assocations and precedence */
+%left "==" "!="
+%left ">" ">=" "<" "<="
 %left "+" "-"
 %left "*" "/"
 %left "^"
@@ -91,6 +93,12 @@ binary_operation
 	| expression "-" expression { $$ = new yy.nodes.BinaryOperation($1, "-", $3); }
 	| expression "*" expression { $$ = new yy.nodes.BinaryOperation($1, "*", $3); }
 	| expression "/" expression { $$ = new yy.nodes.BinaryOperation($1, "/", $3); }
+	| expression "==" expression { $$ = new yy.nodes.BinaryOperation($1, "===", $3); }
+	| expression "!=" expression { $$ = new yy.nodes.BinaryOperation($1, "!==", $3); }
+	| expression ">" expression { $$ = new yy.nodes.BinaryOperation($1, ">", $3); }
+	| expression ">=" expression { $$ = new yy.nodes.BinaryOperation($1, ">=", $3); }
+	| expression "<" expression { $$ = new yy.nodes.BinaryOperation($1, "<", $3); }
+	| expression "<=" expression { $$ = new yy.nodes.BinaryOperation($1, "<=", $3); }
 	;
 
 expression
