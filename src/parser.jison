@@ -52,9 +52,9 @@ comma_separated_identifiers
 function_parameter_declaration
 	: "->"
 		{	$$ = new yy.nodes.IdentifierList(); }
-	| "\" "->"
+	| "|" "|" "->"
 		{	$$ = new yy.nodes.IdentifierList(); }
-	| "\" comma_separated_identifiers "->"
+	| "|" comma_separated_identifiers "|" "->"
 		{	$$ = $2; }
 	;
 

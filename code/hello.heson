@@ -1,12 +1,12 @@
 require "cli-color" as colors
 require "some-module" as someModule
 
-foo = \a ->
+foo = |a| ->
 	console.log(a)
 	require "express" as express
 	baz = express
 
-bar = \a -> console.log(a)
+bar = |a| -> console.log(a)
 
 o = {
 	x:	1
