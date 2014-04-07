@@ -21,6 +21,13 @@ string
 		{	$$ = new yy.nodes.String($1.substring(1, $1.length-1)); }
 	;
 
+boolean
+	: TRUE
+		{	$$ = true; }
+	| FALSE
+		{	$$ = false; }
+	;
+
 identifier
 	: IDENTIFIER
 		{	$$ = new yy.nodes.Identifier($1); }
@@ -104,6 +111,7 @@ binary_operation
 expression
 	: number
 	| string
+	| boolean
 	| identifier
 	| function_call
 	| function_declaration
