@@ -117,7 +117,6 @@ require
 
 statement
 	: expression NEWLINE
-		{	$$ = $1; }
 	| assignment NEWLINE
 	| require NEWLINE
 	;
@@ -134,7 +133,6 @@ top_level_require
 
 top_level_statement
 	: expression NEWLINE
-		{	$$ = $1; }
 	| top_level_assignment NEWLINE
 	| top_level_require NEWLINE
 	;
@@ -146,7 +144,6 @@ statements
 		{	$1.push($2);
 			$$ = $1; }
 	| statements NEWLINE
-		{	$$ = $1; }
 	;
 
 top_level_statements
@@ -156,7 +153,6 @@ top_level_statements
 		{	$1.push($2);
 			$$ = $1; }
 	| top_level_statements NEWLINE
-		{	$$ = $1; }
 	;
 
 block
