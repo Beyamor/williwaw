@@ -41,7 +41,7 @@ class TokenStream
 language =
 	identifier: (tokens) ->
 		identifier = tokens.read "IDENTIFIER"
-		return new nodes.Identifier identifier.text
+		return new nodes.Identifier identifier
 
 	string: (tokens) ->
 		value = tokens.read "STRING"
