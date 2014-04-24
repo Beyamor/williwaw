@@ -1,12 +1,9 @@
 fs		= require "fs"
-{parser}	= require "./parser"
-nodes		= require "./nodes"
-lexer		= require "./lexer"
-
-parser.lexer = lexer
-parser.yy.nodes = nodes
+{Lexer}		= require "./lexer"
+{Parser}	= require "./parser"
 
 [_, _, fileName] = process.argv
 fileContents = fs.readFileSync fileName, "utf8"
-code = parser.parse fileContents
+tokens = (new Lexer).lex fileContents
+code = (new Parser).parse tokens
 console.log code.genCode()
