@@ -38,6 +38,11 @@ class TokenStream
 		while not @isAtEnd() and @peek().type is "NEWLINE"
 			@pop()
 
+	skippingNewlines: (body) ->
+		@skipNewlines()
+		body()
+		@skipNewlines()
+
 language =
 	identifier: (tokens) ->
 		identifier = tokens.read "IDENTIFIER"
@@ -57,11 +62,10 @@ language =
 	topLevelStatements: (tokens) ->
 		block = new nodes.Block
 		until tokens.isAtEnd()
-			tokens.skipNewlines()
-			require = @tryParsing language.topLevelRequire, tokens
-			tokens.expect "NEWLINE"
-			block.push require
-			tokens.skipNewlines()
+			tokens.skippingNewlines =>
+				require = @tryParsing language.topLevelRequire, tokens
+				tokens.expect "NEWLINE"
+				block.push require
 		return block
 
 	module: (tokens) ->
