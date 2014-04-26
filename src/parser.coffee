@@ -53,48 +53,53 @@ language =
 		return new nodes.String value.substring 1, value.length - 1
 
 	expression: (tokens) ->
-		@tryParsing [language.identifier], tokens
+		@tryParsing tokens, [
+			language.identifier
+		]
 
 	topLevelRequire: (tokens) ->
 		tokens.expect text: "require"
-		path = @tryParsing language.string, tokens
+		path = @tryParsing tokens, language.string
 		tokens.expect text: "as"
-		identifier = @tryParsing language.identifier, tokens
+		identifier = @tryParsing tokens, language.identifier
 		return new nodes.TopLevelRequire path, identifier
 
 	topLevelStatements: (tokens) ->
 		block = new nodes.Block
 		until tokens.isAtEnd()
 			tokens.skippingNewlines =>
-				statement = @tryParsing [language.topLevelRequire, language.expression], tokens
+				statement = @tryParsing tokens, [
+					language.topLevelRequire
+					language.expression
+				]
 				tokens.expect "NEWLINE"
 				block.push statement
 		return block
 
 	module: (tokens) ->
-		block = @tryParsing language.topLevelStatements, tokens
+		block = @tryParsing tokens, language.topLevelStatements
 		return new nodes.Module block
 
 class exports.Parser
 	parse: (tokens) ->
-		@tryParsing language.module, new TokenStream tokens
+		@tryParsing new TokenStream(tokens), language.module
 
-	tryParsingOne: (parse, tokens) ->
+	tryParsingOne: (tokens, parse) ->
 		tokensClone = tokens.clone()
 		result = parse.call this, tokensClone
 		tokens.moveTo tokensClone
 		return result
 
-	tryParsingAny: (parses, tokens) ->
+	tryParsingAny: (tokens, parses) ->
 		while true
 			parse = parses.shift()
 			try
-				return @tryParsing parse, tokens
+				return @tryParsing tokens, parse
 			catch e
 				throw e if parses.length is 0
 
-	tryParsing: (what, tokens) ->
+	tryParsing: (tokens, what) ->
 		if Array.isArray what
-			@tryParsingAny what, tokens
+			@tryParsingAny tokens, what
 		else
-			@tryParsingOne what, tokens
+			@tryParsingOne tokens, what
