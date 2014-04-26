@@ -52,6 +52,9 @@ language =
 		value = tokens.read "STRING"
 		return new nodes.String value.substring 1, value.length - 1
 
+	expression: (tokens) ->
+		@tryParsing [language.identifier], tokens
+
 	topLevelRequire: (tokens) ->
 		tokens.expect text: "require"
 		path = @tryParsing language.string, tokens
@@ -63,9 +66,9 @@ language =
 		block = new nodes.Block
 		until tokens.isAtEnd()
 			tokens.skippingNewlines =>
-				require = @tryParsing language.topLevelRequire, tokens
+				statement = @tryParsing [language.topLevelRequire, language.expression], tokens
 				tokens.expect "NEWLINE"
-				block.push require
+				block.push statement
 		return block
 
 	module: (tokens) ->
@@ -76,8 +79,22 @@ class exports.Parser
 	parse: (tokens) ->
 		@tryParsing language.module, new TokenStream tokens
 
-	tryParsing: (parse, tokens) ->
+	tryParsingOne: (parse, tokens) ->
 		tokensClone = tokens.clone()
 		result = parse.call this, tokensClone
 		tokens.moveTo tokensClone
 		return result
+
+	tryParsingAny: (parses, tokens) ->
+		while true
+			parse = parses.shift()
+			try
+				return @tryParsing parse, tokens
+			catch e
+				throw e if parses.length is 0
+
+	tryParsing: (what, tokens) ->
+		if Array.isArray what
+			@tryParsingAny what, tokens
+		else
+			@tryParsingOne what, tokens
