@@ -55,6 +55,7 @@ language =
 	expression: (tokens) ->
 		@tryParsing tokens, [
 			language.identifier
+			language.string
 		]
 
 	topLevelRequire: (tokens) ->
@@ -64,12 +65,19 @@ language =
 		identifier = @tryParsing tokens, language.identifier
 		return new nodes.TopLevelRequire path, identifier
 
+	topLevelAssignment: (tokens) ->
+		identifier = @tryParsing tokens, language.identifier
+		tokens.expect "="
+		value = @tryParsing tokens, language.expression
+		return new nodes.TopLevelAssignment identifier, value
+
 	topLevelStatements: (tokens) ->
 		block = new nodes.Block
 		until tokens.isAtEnd()
 			tokens.skippingNewlines =>
 				statement = @tryParsing tokens, [
 					language.topLevelRequire
+					language.topLevelAssignment
 					language.expression
 				]
 				tokens.expect "NEWLINE"
@@ -96,6 +104,7 @@ class exports.Parser
 			try
 				return @tryParsing tokens, parse
 			catch e
+				console.log "failed parse b/c #{e}"
 				throw e if parses.length is 0
 
 	tryParsing: (tokens, what) ->

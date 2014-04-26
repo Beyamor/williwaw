@@ -44,7 +44,7 @@ class exports.Lexer
 		@tokens.push
 			type: type
 			text: text
-			toString: -> "#{text}:<#{type}>"
+			toString: -> "#{text or type}"
 
 	lex: (text) ->
 		@indentStack = [0]
