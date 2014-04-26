@@ -28,6 +28,11 @@ class exports.Lexer
 		@o /[a-zA-Z][a-zA-Z0-9_]*/, (name) =>
 			@push "IDENTIFIER", name
 
+		@o /$/, =>
+			while @indentStack[0] > 0
+				@push "DEDENT"
+				@indentStack.shift()
+
 	o: (pattern, handler) ->
 		flags = "g"
 		flags += "m" if pattern.multiline
