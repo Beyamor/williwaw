@@ -35,21 +35,21 @@ language =
 
 	expression: ->
 		@tryParsing [
-			language.identifier
-			language.string
+			"identifier"
+			"string"
 		]
 
 	topLevelRequire: ->
 		@expect text: "require"
-		path = @tryParsing language.string
+		path = @tryParsing "string"
 		@expect text: "as"
-		identifier = @tryParsing language.identifier
+		identifier = @tryParsing "identifier"
 		return new nodes.TopLevelRequire path, identifier
 
 	topLevelAssignment: ->
-		identifier = @tryParsing language.identifier
+		identifier = @tryParsing "identifier"
 		@expect "="
-		value = @tryParsing language.expression
+		value = @tryParsing "expression"
 		return new nodes.TopLevelAssignment identifier, value
 
 	topLevelStatements: ->
@@ -57,27 +57,27 @@ language =
 		until @tokens.isAtEnd()
 			@skippingNewlines =>
 				statement = @tryParsing [
-					language.topLevelRequire
-					language.topLevelAssignment
-					language.expression
+					"topLevelRequire"
+					"topLevelAssignment"
+					"expression"
 				]
 				@expect "NEWLINE"
 				block.push statement
 		return block
 
 	module: (tokens) ->
-		block = @tryParsing language.topLevelStatements
+		block = @tryParsing "topLevelStatements"
 		return new nodes.Module block
 
 class exports.Parser
 	parse: (tokens) ->
 		@tokens = new TokenStream tokens
-		@tryParsing language.module
+		@tryParsing "module"
 
 	tryParsingOne: (parse) ->
 		@tokens.setMark()
 		try
-			result = parse.call this
+			result = language[parse].call this
 			@tokens.dropMark()
 			return result
 		catch e
@@ -121,5 +121,3 @@ class exports.Parser
 		@skipNewlines()
 		body()
 		@skipNewlines()
-
-
