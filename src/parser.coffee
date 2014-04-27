@@ -52,7 +52,7 @@ language =
 		"(": (f) ->
 			args = new nodes.ExpressionList()
 			while @tokens.peek().type != ")"
-				args.push @tryParsingExpression()
+				args.push @tryParsing "expression"
 				@expect "," if @tokens.peek().type != ")"
 			@expect ")"
 			return new nodes.FunctionCall f, args
