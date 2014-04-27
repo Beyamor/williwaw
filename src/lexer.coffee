@@ -22,8 +22,11 @@ class exports.Lexer
 		@o /\n/, =>
 			@push "newline"
 
-		@o /->|\(|\)|\||\+|-|\*|\/|==|!=|>|>=|<|<=|=|{|}|\./, (symbol) =>
+		@o /->|\(|\)|\||\+|-|\*|\/|==|!=|>|>=|<|<=|=|{|}|\.|:/, (symbol) =>
 			@push symbol
+
+		@o /[0-9]+(\.[0-9]+)?/, (number) =>
+			@push "number", number
 
 		@o /[a-zA-Z][a-zA-Z0-9_]*/, (name) =>
 			@push "identifier", name

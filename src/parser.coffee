@@ -50,6 +50,10 @@ language =
 			string = @read "string"
 			return new nodes.String string.substring(1, string.length - 1)
 
+		number: ->
+			number = @read "number"
+			return new nodes.Number number
+
 	infixParselets:
 		"(": (f) ->
 			args = new nodes.ExpressionList()
@@ -90,21 +94,35 @@ language =
 			]
 			return new nodes.FunctionDeclaration paramList, body
 
+		objectLiteral: ->
+			@indented =>
+				properties = []
+				console.log "object literal"
+				@until "dedent", =>
+					property = @tryParsing [
+						"identifier"
+						"string"
+					]
+					@expect ":"
+					value = @tryParsing "expression"
+					@expect "newline"
+					properties.push property: property, value: value
+				return new nodes.ObjectLiteral properties
+
 		expression: (minPrecedence=0) ->
 			@tryParsing [
+				"objectLiteral"
 				"functionDeclaration"
 				"precedenceExpression"
 			]
 
 		indentedBlock: ->
-			@expect "newline"
-			@expect "indent"
-			block = new nodes.Block
-			while @tokens.peek().type isnt "dedent"
-				statement = @tryParsing "statement"
-				block.push statement
-			@expect "dedent"
-			return block
+			@indented =>
+				block = new nodes.Block
+				while @tokens.peek().type isnt "dedent"
+					statement = @tryParsing "statement"
+					block.push statement
+				return block
 			
 		topLevelRequire: ->
 			@expectText "require"
@@ -223,3 +241,14 @@ class exports.Parser
 		@skipNewlines()
 		body()
 		@skipNewlines()
+
+	indented: (body) ->
+		@expect "newline"
+		@expect "indent"
+		result = body()
+		@expect "dedent"
+		return result
+
+	until: (tokenType, body) ->
+		while @tokens.peek().type isnt tokenType
+			body()
