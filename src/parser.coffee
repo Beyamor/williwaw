@@ -132,7 +132,7 @@ language =
 
 		".": (lhs) ->
 			rhs = @parse "identifier"
-			return new Node ".", [lhs, rhs]
+			return new Node "get", [lhs, rhs]
 
 		"+": binaryOp "+"
 		"-": binaryOp "-"
@@ -189,7 +189,7 @@ language =
 					@expect ":"
 					value = @parse "expression"
 					@expect "newline"
-					properties.push property, value
+					properties.push new Node "property", [property, value]
 				return new Node "object", properties
 
 		expression: (minPrecedence=0) ->
@@ -218,7 +218,7 @@ language =
 			identifier = @parse "identifier"
 			@expect "="
 			value = @parse "expression"
-			return new Node "=", [identifier, value]
+			return new Node "assign", [identifier, value]
 
 		topLevelStatements: ->
 			block = []
@@ -238,7 +238,7 @@ language =
 			identifier = @parse "identifier"
 			@expect "="
 			value = @parse "expression"
-			return new Node "=", [identifier, value]
+			return new Node "assign", [identifier, value]
 
 		require: ->
 			@expectText "require"
