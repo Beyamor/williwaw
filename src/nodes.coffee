@@ -144,3 +144,9 @@ class exports.BinaryOperation
 
 	genCode: ->
 		"(#{@lhs.genCode()} #{@op} #{@rhs.genCode()})"
+
+class exports.ExponentiationOp
+	constructor: (@lhs, @rhs) ->
+
+	genCode: ->
+		"(Math.pow(#{@lhs.genCode()}, #{@rhs.genCode()}))"

@@ -43,6 +43,7 @@ language =
 			"comparison"
 			"plusminus"
 			"multiplydivide"
+			"exponentiation"
 			"propertyAccess"
 			"call"
 		]
@@ -60,6 +61,7 @@ language =
 			">=":	"comparison"
 			"<":	"comparison"
 			"<=":	"comparison"
+			"**":	"exponentiation"
 
 	prefixParselets:
 		true: ->
@@ -109,6 +111,10 @@ language =
 		">=": binaryOp ">="
 		"<": binaryOp "<"
 		"<=": binaryOp "<="
+
+		"**": (lhs) ->
+			rhs = @parse "expression", @getPredence "**"
+			return new nodes.ExponentiationOp lhs, rhs
 			
 	statementParselets:
 		precedenceExpression: (minPrecedence=0) ->
