@@ -64,7 +64,7 @@ language =
 			return new nodes.PropertyAccess lhs, rhs
 
 	statementParselets:
-		expression: (minPrecedence=0) ->
+		precedenceExpression: (minPrecedence=0) ->
 			token	= @tokens.peek()
 			prefix	= language.prefixParselets[token.type]
 			throw new ParseError "Could not find a prefix for #{token}" unless prefix?
@@ -76,6 +76,36 @@ language =
 				left	= infix.call this, left
 			return left
 
+		functionDeclaration: ->
+			@expect "("
+			paramList = new nodes.IdentifierList
+			while @tokens.peek().type != ")"
+				paramList.push @tryParsing "identifier"
+				@expect "," unless @tokens.peek().type is ")"
+			@expect ")"
+			@expect "->"
+			body = @tryParsing [
+				"expression"
+				"indentedBlock"
+			]
+			return new nodes.FunctionDeclaration paramList, body
+
+		expression: (minPrecedence=0) ->
+			@tryParsing [
+				"functionDeclaration"
+				"precedenceExpression"
+			]
+
+		indentedBlock: ->
+			@expect "newline"
+			@expect "indent"
+			block = new nodes.Block
+			while @tokens.peek().type isnt "dedent"
+				statement = @tryParsing "statement"
+				block.push statement
+			@expect "dedent"
+			return block
+			
 		topLevelRequire: ->
 			@expectText "require"
 			path = @tryParsing "string"
@@ -102,6 +132,28 @@ language =
 					block.push statement
 			return block
 
+		assignment: ->
+			identifier = @tryParsing "identifier"
+			@expect "="
+			value = @tryParsing "expression"
+			return new nodes.Assignment identifier, value
+
+		require: ->
+			@expectText "require"
+			path = @tryParsing "string"
+			@expectText "as"
+			identifier = @tryParsing "identifier"
+			return new nodes.Require path, identifier
+
+		statement: ->
+			thing = @tryParsing [
+				"require"
+				"assignment"
+				"expression"
+			]
+			@expect "newline"
+			return thing
+
 		module: (tokens) ->
 			block = @tryParsing "topLevelStatements"
 			return new nodes.Module block
@@ -127,7 +179,7 @@ class exports.Parser
 			else if language.prefixParselets[parse]?
 				result = language.prefixParselets[parse].call this
 			else
-				throw new ParseError "No parselet for #{parse}"
+				throw new Error "No parselet for #{parse}"
 			@tokens.dropMark()
 			return result
 		catch e
@@ -140,7 +192,7 @@ class exports.Parser
 			try
 				return @tryParsing parse
 			catch e
-				throw e if parses.length is 0 or not e instanceof ParseError
+				throw e unless parses.length > 0 and e instanceof ParseError
 
 	tryParsing: (what) ->
 		if Array.isArray what
