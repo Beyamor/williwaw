@@ -96,7 +96,6 @@ language =
 		objectLiteral: ->
 			@indented =>
 				properties = []
-				console.log "object literal"
 				@until "dedent", =>
 					property = @parse [
 						"identifier"
