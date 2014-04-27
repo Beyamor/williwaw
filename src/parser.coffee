@@ -33,11 +33,13 @@ class TokenStream
 language =
 	precedences:
 		ordering: [
+			"propertyAccess"
 			"call"
 		]
 	
 		mapping:
 			"(":	"call"
+			".":	"propertyAccess"
 
 	prefixParselets:
 		identifier: ->
@@ -56,6 +58,10 @@ language =
 				@expect "," if @tokens.peek().type != ")"
 			@expect ")"
 			return new nodes.FunctionCall f, args
+
+		".": (lhs) ->
+			rhs = @tryParsing "identifier"
+			return new nodes.PropertyAccess lhs, rhs
 
 	statementParselets:
 		expression: (minPrecedence=0) ->

@@ -40,6 +40,12 @@ class exports.Identifier
 	genCode: ->
 		@name
 
+class exports.PropertyAccess
+	constructor: (@lhs, @rhs) ->
+
+	genCode: ->
+		"#{@lhs.genCode()}.#{@rhs.genCode()}"
+
 class exports.FunctionCall
 	constructor: (@functionName, @params) ->
 
