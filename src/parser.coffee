@@ -125,11 +125,12 @@ language =
 
 		functionDeclaration: ->
 			paramList = new nodes.IdentifierList
-			@in "(", ")", =>
-				@until ")", =>
-					while @tokens.peek().type != ")"
-						paramList.push @parse "identifier"
-						@expect "," unless @tokens.peek().type is ")"
+			if @tokens.peek().type is "("
+				@in "(", ")", =>
+					@until ")", =>
+						while @tokens.peek().type != ")"
+							paramList.push @parse "identifier"
+							@expect "," unless @tokens.peek().type is ")"
 			@expect "->"
 			body = @parse [
 				"expression"
