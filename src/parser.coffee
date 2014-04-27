@@ -30,9 +30,19 @@ class TokenStream
 	dropMark: ->
 		@marks.pop()
 
+binaryOp = (op) ->
+	(lhs) ->
+		rhs = @parse "expression"
+		return new nodes.BinaryOperation op, lhs, rhs
+
+
 language =
 	precedences:
 		ordering: [
+			"equality"
+			"comparison"
+			"plusminus"
+			"multiplydivide"
 			"propertyAccess"
 			"call"
 		]
@@ -40,6 +50,16 @@ language =
 		mapping:
 			"(":	"call"
 			".":	"propertyAccess"
+			"+":	"plusminus"
+			"-":	"plusminus"
+			"*":	"multiplydivide"
+			"/":	"multiplydivide"
+			"==":	"equality"
+			"!=":	"equality"
+			">":	"comparison"
+			">=":	"comparison"
+			"<":	"comparison"
+			"<=":	"comparison"
 
 	prefixParselets:
 		true: ->
@@ -62,6 +82,10 @@ language =
 			number = @read "number"
 			return new nodes.Number number
 
+		"(": ->
+			@in "(", ")", =>
+				@parse "expression"
+
 	infixParselets:
 		"(": (f) ->
 			args = new nodes.ExpressionList()
@@ -75,6 +99,17 @@ language =
 			rhs = @parse "identifier"
 			return new nodes.PropertyAccess lhs, rhs
 
+		"+": binaryOp "+"
+		"-": binaryOp "-"
+		"*": binaryOp "*"
+		"/": binaryOp "/"
+		"==": binaryOp "=="
+		"!=": binaryOp "!="
+		">": binaryOp ">"
+		">=": binaryOp ">="
+		"<": binaryOp "<"
+		"<=": binaryOp "<="
+			
 	statementParselets:
 		precedenceExpression: (minPrecedence=0) ->
 			token	= @tokens.peek()
@@ -89,12 +124,13 @@ language =
 			return left
 
 		functionDeclaration: ->
-			@expect "("
 			paramList = new nodes.IdentifierList
-			while @tokens.peek().type != ")"
-				paramList.push @parse "identifier"
-				@expect "," unless @tokens.peek().type is ")"
-			@expect ")", "->"
+			@in "(", ")", =>
+				@until ")", =>
+					while @tokens.peek().type != ")"
+						paramList.push @parse "identifier"
+						@expect "," unless @tokens.peek().type is ")"
+			@expect "->"
 			body = @parse [
 				"expression"
 				"indentedBlock"
@@ -259,6 +295,12 @@ class Parser
 	until: (tokenType, body) ->
 		while @tokens.peek().type isnt tokenType
 			body()
+
+	in: (opening, closing, body) ->
+		@expect opening
+		result = body()
+		@expect closing
+		return result
 
 exports.parse = (tokens) ->
 	(new Parser).parseItUp tokens

@@ -140,7 +140,7 @@ class exports.ObjectLiteral
 		return s
 
 class exports.BinaryOperation
-	constructor: (@lhs, @op, @rhs) ->
+	constructor: (@op, @lhs, @rhs) ->
 
 	genCode: ->
 		"(#{@lhs.genCode()} #{@op} #{@rhs.genCode()})"
