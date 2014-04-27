@@ -32,7 +32,7 @@ class TokenStream
 
 binaryOp = (op) ->
 	(lhs) ->
-		rhs = @parse "expression"
+		rhs = @parse parselet: "expression", args: [@getPredence op]
 		return new nodes.BinaryOperation op, lhs, rhs
 
 
@@ -155,7 +155,7 @@ language =
 			@parse [
 				"objectLiteral"
 				"functionDeclaration"
-				"precedenceExpression"
+				parselet: "precedenceExpression", args: [minPrecedence]
 			]
 
 		indentedBlock: ->
@@ -223,36 +223,44 @@ class Parser
 		@tokens = new TokenStream tokens
 		@parse "module"
 
-	nextPredence: ->
-		nextToken	= @tokens.peek().type
-		precedence	= language.precedences.mapping[nextToken]
+	getPredence: (type) ->
+		precedence = language.precedences.mapping[type]
 		if precedence?
 			return language.precedences.ordering.indexOf(precedence) + 1
 		else
 			return 0
 
-	parseOne: (parse) ->
+	nextPredence: ->
+		@getPredence @tokens.peek().type
+		
+	parseOne: (parselet) ->
 		@tokens.setMark()
 		try
-			if language.statementParselets[parse]?
-				result = language.statementParselets[parse].call this
-			else if language.prefixParselets[parse]?
-				result = language.prefixParselets[parse].call this
+			{parselet, args} =
+				if parselet.args?
+					parselet
+				else
+					parselet: parselet, args: []
+
+			if language.statementParselets[parselet]?
+				result = language.statementParselets[parselet].apply this, args
+			else if language.prefixParselets[parselet]?
+				result = language.prefixParselets[parselet].apply this, args
 			else
-				throw new Error "No parselet for #{parse}"
+				throw new Error "No parselet for #{parselet}"
 			@tokens.dropMark()
 			return result
 		catch e
 			@tokens.restoreMark()
 			throw e
 
-	parseAny: (parses) ->
+	parseAny: (parselets) ->
 		while true
-			parse = parses.shift()
+			parselet = parselets.shift()
 			try
-				return @parse parse
+				return @parse parselet
 			catch e
-				throw e unless parses.length > 0 and e instanceof ParseError
+				throw e unless parselets.length > 0 and e instanceof ParseError
 
 	parse: (what) ->
 		if Array.isArray what
