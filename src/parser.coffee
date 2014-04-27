@@ -3,7 +3,6 @@ nodes = require "./nodes"
 class ParseError extends Error
 	constructor: (message) ->
 		super()
-		@name = "ParseError"
 		@message = message
 
 class TokenStream
@@ -120,7 +119,7 @@ language =
 		precedenceExpression: (minPrecedence=0) ->
 			token	= @tokens.peek()
 			prefix	= language.prefixParselets[token.type]
-			throw new ParseError "#{token} is not an expression" unless prefix?
+			@failOn token unless prefix?
 
 			left = prefix.call this
 			while minPrecedence < @nextPredence()
@@ -188,7 +187,7 @@ language =
 
 		topLevelStatements: ->
 			block = new nodes.Block
-			until @tokens.isAtEnd()
+			@until "eof", =>
 				@skippingNewlines =>
 					statement = @parse [
 						"topLevelRequire"
@@ -197,6 +196,7 @@ language =
 					]
 					@expect "newline"
 					block.push statement
+			@expect "eof"
 			return block
 
 		assignment: ->
@@ -278,15 +278,13 @@ class Parser
 	expect: (expectedTypes...) ->
 		for expectedType in expectedTypes
 			token = @tokens.pop()
-			unless token? and token.type is expectedType
-				throw new ParseError "Expected token of type #{expectedType} and got #{token}"
+			@failOn token unless token? and token.type is expectedType
 		return token
 
 	expectText: (expectedTexts...) ->
 		for expectedText in expectedTexts
 			token = @tokens.pop()
-			unless token? and token.text is expectedText
-				throw new ParseError "Expected token with text #{expectedText} and got #{token}"
+			@failOn token unless token? and token.text is expectedText
 		return token
 
 	read: (what) ->
@@ -316,6 +314,9 @@ class Parser
 		result = body()
 		@expect closing
 		return result
+
+	failOn: (token) ->
+		throw new ParseError "Error on line #{token.line}: Unexpected '#{token}'"
 
 exports.parse = (tokens) ->
 	(new Parser).parseItUp tokens

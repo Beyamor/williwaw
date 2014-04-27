@@ -35,6 +35,7 @@ class exports.Lexer
 			while @indentStack[0] > 0
 				@push "dedent"
 				@indentStack.shift()
+			@push "eof"
 
 	o: (pattern, handler) ->
 		flags = "g"
@@ -48,10 +49,12 @@ class exports.Lexer
 			type: type
 			text: text
 			toString: -> "#{text or type}"
+			line: @line
 
 	lex: (text) ->
 		@indentStack = [0]
 		@tokens = []
+		@line = 1
 
 		startIndex = 0
 		while startIndex < text.length
@@ -63,6 +66,7 @@ class exports.Lexer
 					matched = true
 					matchText = match[0]
 					handle matchText
+					@line += (matchText.match(/\n/g) || []).length
 					startIndex += matchText.length
 
 			unless matched
