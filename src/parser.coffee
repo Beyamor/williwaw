@@ -39,14 +39,16 @@ language =
 		mapping:
 			"(":	"call"
 
-	prefixes:
-		identifier: (token) ->
-			return new nodes.Identifier token.text
+	prefixParselets:
+		identifier: ->
+			name = @read "identifier"
+			return new nodes.Identifier name
 
-		string: (token) ->
-			return new nodes.String token.text.substring(1, token.text.substring.length - 1)
+		string: ->
+			string = @read "string"
+			return new nodes.String string.substring(1, string.length - 1)
 
-	infixes:
+	infixParselets:
 		"(": (f) ->
 			args = new nodes.ExpressionList()
 			while @tokens.peek().type != ")"
@@ -55,24 +57,17 @@ language =
 			@expect ")"
 			return new nodes.FunctionCall f, args
 
-	parselets:
-		identifier: ->
-			new nodes.Identifier @read "identifier"
-
-		string: ->
-			token = @expect "string"
-			return new nodes.String token.text.substring(1, token.text.substring.length - 1)
-
+	statementParselets:
 		expression: (minPrecedence=0) ->
-			token	= @tokens.pop()
-			prefix	= language.prefixes[token.type]
+			token	= @tokens.peek()
+			prefix	= language.prefixParselets[token.type]
 			throw new ParseError "Could not find a prefix for #{token}" unless prefix?
 
-			left = prefix.call this, token
+			left = prefix.call this
 			while minPrecedence < @nextPredence()
 				token	= @tokens.pop()
-				infix	= language.infixes[token.type]
-				left	= infix.call this, left, token
+				infix	= language.infixParselets[token.type]
+				left	= infix.call this, left
 			return left
 
 		topLevelRequire: ->
@@ -121,7 +116,12 @@ class exports.Parser
 	tryParsingOne: (parse) ->
 		@tokens.setMark()
 		try
-			result = language.parselets[parse].call this
+			if language.statementParselets[parse]?
+				result = language.statementParselets[parse].call this
+			else if language.prefixParselets[parse]?
+				result = language.prefixParselets[parse].call this
+			else
+				throw new ParseError "No parselet for #{parse}"
 			@tokens.dropMark()
 			return result
 		catch e
