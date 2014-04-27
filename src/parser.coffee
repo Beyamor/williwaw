@@ -57,7 +57,7 @@ language =
 	infixParselets:
 		"(": (f) ->
 			args = new nodes.ExpressionList()
-			while @tokens.peek().type != ")"
+			@until ")", =>
 				args.push @parse "expression"
 				@expect "," if @tokens.peek().type != ")"
 			@expect ")"
@@ -86,8 +86,7 @@ language =
 			while @tokens.peek().type != ")"
 				paramList.push @parse "identifier"
 				@expect "," unless @tokens.peek().type is ")"
-			@expect ")"
-			@expect "->"
+			@expect ")", "->"
 			body = @parse [
 				"expression"
 				"indentedBlock"
@@ -218,16 +217,18 @@ class Parser
 		else
 			@parseOne what
 
-	expect: (expectedType) ->
-		token = @tokens.pop()
-		unless token.type is expectedType
-			throw new ParseError "Expected token of type #{expectedType} and got #{token}"
+	expect: (expectedTypes...) ->
+		for expectedType in expectedTypes
+			token = @tokens.pop()
+			unless token.type is expectedType
+				throw new ParseError "Expected token of type #{expectedType} and got #{token}"
 		return token
 
-	expectText: (expectedText) ->
-		token = @tokens.pop()
-		unless token.text is expectedText
-			throw new ParseError "Expected token with text #{expectedText} and got #{token}"
+	expectText: (expectedTexts...) ->
+		for expectedText in expectedTexts
+			token = @tokens.pop()
+			unless token.text is expectedText
+				throw new ParseError "Expected token with text #{expectedText} and got #{token}"
 		return token
 
 	read: (what) ->
@@ -243,8 +244,7 @@ class Parser
 		@skipNewlines()
 
 	indented: (body) ->
-		@expect "newline"
-		@expect "indent"
+		@expect "newline", "indent"
 		result = body()
 		@expect "dedent"
 		return result
