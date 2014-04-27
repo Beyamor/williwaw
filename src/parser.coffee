@@ -114,7 +114,7 @@ language =
 		precedenceExpression: (minPrecedence=0) ->
 			token	= @tokens.peek()
 			prefix	= language.prefixParselets[token.type]
-			throw new ParseError "Could not find a prefix for #{token}" unless prefix?
+			throw new ParseError "#{token} is not an expression" unless prefix?
 
 			left = prefix.call this
 			while minPrecedence < @nextPredence()
@@ -272,14 +272,14 @@ class Parser
 	expect: (expectedTypes...) ->
 		for expectedType in expectedTypes
 			token = @tokens.pop()
-			unless token.type is expectedType
+			unless token? and token.type is expectedType
 				throw new ParseError "Expected token of type #{expectedType} and got #{token}"
 		return token
 
 	expectText: (expectedTexts...) ->
 		for expectedText in expectedTexts
 			token = @tokens.pop()
-			unless token.text is expectedText
+			unless token? and token.text is expectedText
 				throw new ParseError "Expected token with text #{expectedText} and got #{token}"
 		return token
 
