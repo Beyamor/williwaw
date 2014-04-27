@@ -58,13 +58,13 @@ language =
 		"(": (f) ->
 			args = new nodes.ExpressionList()
 			while @tokens.peek().type != ")"
-				args.push @tryParsing "expression"
+				args.push @parse "expression"
 				@expect "," if @tokens.peek().type != ")"
 			@expect ")"
 			return new nodes.FunctionCall f, args
 
 		".": (lhs) ->
-			rhs = @tryParsing "identifier"
+			rhs = @parse "identifier"
 			return new nodes.PropertyAccess lhs, rhs
 
 	statementParselets:
@@ -84,11 +84,11 @@ language =
 			@expect "("
 			paramList = new nodes.IdentifierList
 			while @tokens.peek().type != ")"
-				paramList.push @tryParsing "identifier"
+				paramList.push @parse "identifier"
 				@expect "," unless @tokens.peek().type is ")"
 			@expect ")"
 			@expect "->"
-			body = @tryParsing [
+			body = @parse [
 				"expression"
 				"indentedBlock"
 			]
@@ -99,18 +99,18 @@ language =
 				properties = []
 				console.log "object literal"
 				@until "dedent", =>
-					property = @tryParsing [
+					property = @parse [
 						"identifier"
 						"string"
 					]
 					@expect ":"
-					value = @tryParsing "expression"
+					value = @parse "expression"
 					@expect "newline"
 					properties.push property: property, value: value
 				return new nodes.ObjectLiteral properties
 
 		expression: (minPrecedence=0) ->
-			@tryParsing [
+			@parse [
 				"objectLiteral"
 				"functionDeclaration"
 				"precedenceExpression"
@@ -120,28 +120,28 @@ language =
 			@indented =>
 				block = new nodes.Block
 				while @tokens.peek().type isnt "dedent"
-					statement = @tryParsing "statement"
+					statement = @parse "statement"
 					block.push statement
 				return block
 			
 		topLevelRequire: ->
 			@expectText "require"
-			path = @tryParsing "string"
+			path = @parse "string"
 			@expectText "as"
-			identifier = @tryParsing "identifier"
+			identifier = @parse "identifier"
 			return new nodes.TopLevelRequire path, identifier
 
 		topLevelAssignment: ->
-			identifier = @tryParsing "identifier"
+			identifier = @parse "identifier"
 			@expect "="
-			value = @tryParsing "expression"
+			value = @parse "expression"
 			return new nodes.TopLevelAssignment identifier, value
 
 		topLevelStatements: ->
 			block = new nodes.Block
 			until @tokens.isAtEnd()
 				@skippingNewlines =>
-					statement = @tryParsing [
+					statement = @parse [
 						"topLevelRequire"
 						"topLevelAssignment"
 						"expression"
@@ -151,20 +151,20 @@ language =
 			return block
 
 		assignment: ->
-			identifier = @tryParsing "identifier"
+			identifier = @parse "identifier"
 			@expect "="
-			value = @tryParsing "expression"
+			value = @parse "expression"
 			return new nodes.Assignment identifier, value
 
 		require: ->
 			@expectText "require"
-			path = @tryParsing "string"
+			path = @parse "string"
 			@expectText "as"
-			identifier = @tryParsing "identifier"
+			identifier = @parse "identifier"
 			return new nodes.Require path, identifier
 
 		statement: ->
-			thing = @tryParsing [
+			thing = @parse [
 				"require"
 				"assignment"
 				"expression"
@@ -173,13 +173,13 @@ language =
 			return thing
 
 		module: (tokens) ->
-			block = @tryParsing "topLevelStatements"
+			block = @parse "topLevelStatements"
 			return new nodes.Module block
 
-class exports.Parser
-	parse: (tokens) ->
+class Parser
+	parseItUp: (tokens) ->
 		@tokens = new TokenStream tokens
-		@tryParsing "module"
+		@parse "module"
 
 	nextPredence: ->
 		nextToken	= @tokens.peek().type
@@ -189,7 +189,7 @@ class exports.Parser
 		else
 			return 0
 
-	tryParsingOne: (parse) ->
+	parseOne: (parse) ->
 		@tokens.setMark()
 		try
 			if language.statementParselets[parse]?
@@ -204,19 +204,19 @@ class exports.Parser
 			@tokens.restoreMark()
 			throw e
 
-	tryParsingAny: (parses) ->
+	parseAny: (parses) ->
 		while true
 			parse = parses.shift()
 			try
-				return @tryParsing parse
+				return @parse parse
 			catch e
 				throw e unless parses.length > 0 and e instanceof ParseError
 
-	tryParsing: (what) ->
+	parse: (what) ->
 		if Array.isArray what
-			@tryParsingAny what
+			@parseAny what
 		else
-			@tryParsingOne what
+			@parseOne what
 
 	expect: (expectedType) ->
 		token = @tokens.pop()
@@ -252,3 +252,6 @@ class exports.Parser
 	until: (tokenType, body) ->
 		while @tokens.peek().type isnt tokenType
 			body()
+
+exports.parse = (tokens) ->
+	(new Parser).parseItUp tokens
