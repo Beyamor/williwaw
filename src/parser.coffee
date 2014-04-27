@@ -42,6 +42,14 @@ language =
 			".":	"propertyAccess"
 
 	prefixParselets:
+		true: ->
+			@expectText "true"
+			return new nodes.True
+
+		false: ->
+			@expectText "false"
+			return new nodes.False
+
 		identifier: ->
 			name = @read "identifier"
 			return new nodes.Identifier name

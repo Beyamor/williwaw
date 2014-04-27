@@ -74,6 +74,14 @@ class exports.Number
 	genCode: ->
 		@number
 
+class exports.True
+	genCode: ->
+		"true"
+
+class exports.False
+	genCode: ->
+		"false"
+
 class exports.TopLevelAssignment
 	constructor: (@identifier, @value) ->
 
