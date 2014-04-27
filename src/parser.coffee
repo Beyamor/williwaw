@@ -1,4 +1,39 @@
-nodes = require "./nodes"
+class Node
+	constructor: (@name, @children) ->
+		child.parent = this for child in @children
+		if @children.length isnt 0
+			@children[0].isFirstChild = true
+			@children[@children.length-1].isLastChild = true
+
+	getDepth: ->
+		if @parent?
+			@parent.getDepth() + 1
+		else
+			0
+
+	toString: (depth=0)->
+		s = ""
+		if @isFirstChild
+			s += " "
+		s += "(#{@name}"
+		for child in @children
+			s += child.toString(depth + @name.length + 2)
+		s += ")"
+		unless @isLastChild
+			s += "\n" + new Array(depth+1).join(" ")
+		return s
+
+class LeafNode extends Node
+	constructor: (@type, @value) ->
+
+	toString: (depth=0) ->
+		s = ""
+		if @isFirstChild
+			s += " "
+		s += @value
+		unless @isLastChild
+			s += "\n" + new Array(depth+1).join(" ")
+		return s
 
 class ParseError extends Error
 	constructor: (message) ->
@@ -32,8 +67,7 @@ class TokenStream
 binaryOp = (op) ->
 	(lhs) ->
 		rhs = @parse parselet: "expression", args: [@getPredence op]
-		return new nodes.BinaryOperation op, lhs, rhs
-
+		return new Node op, [lhs, rhs]
 
 language =
 	precedences:
@@ -65,23 +99,23 @@ language =
 	prefixParselets:
 		true: ->
 			@expectText "true"
-			return new nodes.True
+			return new LeafNode "boolean", "true"
 
 		false: ->
 			@expectText "false"
-			return new nodes.False
+			return new LeafNode "boolean", "false"
 
 		identifier: ->
 			name = @read "identifier"
-			return new nodes.Identifier name
+			return new LeafNode "identifier", name
 
 		string: ->
 			string = @read "string"
-			return new nodes.String string.substring(1, string.length - 1)
+			return new LeafNode "string", string
 
 		number: ->
 			number = @read "number"
-			return new nodes.Number number
+			return new LeafNode "number", number
 
 		"(": ->
 			@in "(", ")", =>
@@ -89,16 +123,16 @@ language =
 
 	infixParselets:
 		"(": (f) ->
-			args = new nodes.ExpressionList()
+			args = []
 			@until ")", =>
 				args.push @parse "expression"
 				@expect "," if @tokens.peek().type != ")"
 			@expect ")"
-			return new nodes.FunctionCall f, args
+			return new Node "call", [f].concat(args)
 
 		".": (lhs) ->
 			rhs = @parse "identifier"
-			return new nodes.PropertyAccess lhs, rhs
+			return new Node ".", [lhs, rhs]
 
 		"+": binaryOp "+"
 		"-": binaryOp "-"
@@ -113,7 +147,7 @@ language =
 
 		"**": (lhs) ->
 			rhs = @parse "expression", @getPredence "**"
-			return new nodes.ExponentiationOp lhs, rhs
+			return new Node "**", [lhs, rhs]
 			
 	statementParselets:
 		precedenceExpression: (minPrecedence=0) ->
@@ -129,19 +163,20 @@ language =
 			return left
 
 		functionDeclaration: ->
-			paramList = new nodes.IdentifierList
+			params = []
 			if @tokens.peek().type is "("
 				@in "(", ")", =>
 					@until ")", =>
 						while @tokens.peek().type != ")"
-							paramList.push @parse "identifier"
+							params.push @parse "identifier"
 							@expect "," unless @tokens.peek().type is ")"
+			params = new Node "params", params
 			@expect "->"
 			body = @parse [
 				"expression"
 				"indentedBlock"
 			]
-			return new nodes.FunctionDeclaration paramList, body
+			return new Node "fn", [params, body]
 
 		objectLiteral: ->
 			@indented =>
@@ -154,8 +189,8 @@ language =
 					@expect ":"
 					value = @parse "expression"
 					@expect "newline"
-					properties.push property: property, value: value
-				return new nodes.ObjectLiteral properties
+					properties.push property, value
+				return new Node "object", properties
 
 		expression: (minPrecedence=0) ->
 			@parse [
@@ -166,27 +201,27 @@ language =
 
 		indentedBlock: ->
 			@indented =>
-				block = new nodes.Block
+				block = []
 				while @tokens.peek().type isnt "dedent"
 					statement = @parse "statement"
 					block.push statement
-				return block
+				return new Node "do", block
 			
 		topLevelRequire: ->
 			@expectText "require"
 			path = @parse "string"
 			@expectText "as"
 			identifier = @parse "identifier"
-			return new nodes.TopLevelRequire path, identifier
+			return new Node "require", [path, identifier]
 
 		topLevelAssignment: ->
 			identifier = @parse "identifier"
 			@expect "="
 			value = @parse "expression"
-			return new nodes.TopLevelAssignment identifier, value
+			return new Node "=", [identifier, value]
 
 		topLevelStatements: ->
-			block = new nodes.Block
+			block = []
 			@until "eof", =>
 				@skippingNewlines =>
 					statement = @parse [
@@ -197,20 +232,20 @@ language =
 					@expect "newline"
 					block.push statement
 			@expect "eof"
-			return block
+			return new Node "do", block
 
 		assignment: ->
 			identifier = @parse "identifier"
 			@expect "="
 			value = @parse "expression"
-			return new nodes.Assignment identifier, value
+			return new Node "=", [identifier, value]
 
 		require: ->
 			@expectText "require"
 			path = @parse "string"
 			@expectText "as"
 			identifier = @parse "identifier"
-			return new nodes.Require path, identifier
+			return new Node "require", [path, identifier]
 
 		statement: ->
 			thing = @parse [
@@ -223,7 +258,7 @@ language =
 
 		module: (tokens) ->
 			block = @parse "topLevelStatements"
-			return new nodes.Module block
+			return new Node "module", [block]
 
 class Parser
 	parseItUp: (tokens) ->
