@@ -40,10 +40,10 @@ language =
 			"(":	"call"
 
 	prefixes:
-		IDENTIFIER: (token) ->
+		identifier: (token) ->
 			return new nodes.Identifier token.text
 
-		STRING: (token) ->
+		string: (token) ->
 			return new nodes.String token.text.substring(1, token.text.substring.length - 1)
 
 	infixes:
@@ -57,10 +57,10 @@ language =
 
 	parselets:
 		identifier: ->
-			new nodes.Identifier @read "IDENTIFIER"
+			new nodes.Identifier @read "identifier"
 
 		string: ->
-			token = @expect "STRING"
+			token = @expect "string"
 			return new nodes.String token.text.substring(1, token.text.substring.length - 1)
 
 		expression: (minPrecedence=0) ->
@@ -97,7 +97,7 @@ language =
 						"topLevelAssignment"
 						"expression"
 					]
-					@expect "NEWLINE"
+					@expect "newline"
 					block.push statement
 			return block
 
@@ -158,7 +158,7 @@ class exports.Parser
 		return @expect(what).text
 
 	skipNewlines: ->
-		while not @tokens.isAtEnd() and @tokens.peek().type is "NEWLINE"
+		while not @tokens.isAtEnd() and @tokens.peek().type is "newline"
 			@tokens.pop()
 
 	skippingNewlines: (body) ->

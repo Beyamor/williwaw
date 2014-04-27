@@ -8,29 +8,29 @@ class exports.Lexer
 			indentationLevel = indents.length
 			if indentationLevel > @indentStack[0]
 				@indentStack.unshift indentationLevel
-				@push "INDENT"
+				@push "indent"
 
 			while indentationLevel < @indentStack[0]
-				@push "DEDENT"
+				@push "dedent"
 				@indentStack.shift()
 
 		@o /[ 	]+/, =>
 
 		@o /".*"/, (contents) =>
-			@push "STRING", contents
+			@push "string", contents
 
 		@o /\n/, =>
-			@push "NEWLINE"
+			@push "newline"
 
 		@o /->|\(|\)|\||\+|-|\*|\/|==|!=|>|>=|<|<=|=|{|}|\./, (symbol) =>
 			@push symbol
 
 		@o /[a-zA-Z][a-zA-Z0-9_]*/, (name) =>
-			@push "IDENTIFIER", name
+			@push "identifier", name
 
 		@o /$/, =>
 			while @indentStack[0] > 0
-				@push "DEDENT"
+				@push "dedent"
 				@indentStack.shift()
 
 	o: (pattern, handler) ->
