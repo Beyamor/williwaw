@@ -1,5 +1,5 @@
 class Node
-	constructor: (@name, @children) ->
+	constructor: (@type, @children) ->
 		child.parent = this for child in @children
 		if @children.length isnt 0
 			@children[0].isFirstChild = true
@@ -15,9 +15,9 @@ class Node
 		s = ""
 		if @isFirstChild
 			s += " "
-		s += "(#{@name}"
+		s += "(#{@type}"
 		for child in @children
-			s += child.toString(depth + @name.length + 2)
+			s += child.toString(depth + @type.length + 2)
 		s += ")"
 		unless @isLastChild
 			s += "\n" + new Array(depth+1).join(" ")
