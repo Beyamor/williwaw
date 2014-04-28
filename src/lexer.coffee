@@ -2,7 +2,7 @@ KEYWORDS =
 	require:	"REQUIRE"
 	as:		"AS"
 
-class exports.Lexer
+class Lexer
 	constructor: ->
 		@o /^	*/m, (indents) =>
 			indentationLevel = indents.length
@@ -73,3 +73,6 @@ class exports.Lexer
 				throw new Error "Can't tokenize character '#{text[startIndex]}'"
 
 		return @tokens
+
+exports.lex = (text) ->
+	(new Lexer).lex text
