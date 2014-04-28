@@ -173,7 +173,7 @@ language =
 			params = new Node "params", params
 			@expect "->"
 			body = @parse [
-				"expression"
+				"expressionBlock"
 				"indentedBlock"
 			]
 			return new Node "fn", [params, body]
@@ -198,6 +198,10 @@ language =
 				"functionDeclaration"
 				parselet: "precedenceExpression", args: [minPrecedence]
 			]
+
+		expressionBlock: ->
+			expression = @parse "expression"
+			return new Node "do", [expression]
 
 		indentedBlock: ->
 			@indented =>

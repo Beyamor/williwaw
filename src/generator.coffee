@@ -49,15 +49,15 @@ generators =
 		@commaSeparated children
 
 	fn: binaryGenerator (params, body, blockDepth) ->
-		"function (#{@generate params, blockDepth}) {#{@generate body, blockDepth}}"
+		"function (#{@generate params, blockDepth})\n#{@generate body, blockDepth}"
 
 	property: binaryGenerator (lhs, rhs, blockDepth) ->
 		"#{@generate lhs, blockDepth}: #{@generate rhs, blockDepth}"
 
 	object: ({children}, blockDepth) ->
-		s = indents(blockDepth) + "{\n"
+		s = "\n" + indents(blockDepth) + "{\n"
 		for child, index in children
-			s += indents(blockDepth) + "#{@generate child, blockDepth + 1}"
+			s += indents(blockDepth + 1) + "#{@generate child, blockDepth + 1}"
 			s += "," if index < children.length - 1
 			s += "\n"
 		s += indents(blockDepth) + "}"
