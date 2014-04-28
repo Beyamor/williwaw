@@ -79,20 +79,32 @@ generators =
 		{children} = module
 		topLevelBindings = []
 		topLevelPaths = []
+		topLevelAssignments = []
+
 		traverse = (node) ->
 			if node.type is "require"
 				[path, binding] = node.children
 				topLevelBindings.push binding
 				topLevelPaths.push path
 				node.handled = true
-			else if node.type isnt "fn" and node.children?
+			else if node.type is "assign"
+				[identifier] = node.children
+				topLevelAssignments.push identifier
+
+			if node.type isnt "fn" and node.type isnt "require" and node.type isnt "assign" and node.children?
 				traverse child for child in node.children
 		traverse module
 
+		moduleExports = topLevelAssignments.map((id) => @generate id).map((id) => "__exports.#{id} = #{id};").join("\n")
+
 		lines \
 		"define([#{@commaSeparated topLevelPaths}],",
-		"function(#{@commaSeparated topLevelBindings})",
-		@generate(children[0], blockDepth+1) + ");"
+		"function(#{@commaSeparated topLevelBindings}){",
+		"var __exports = {};",
+		@generate(children[0], blockDepth+1),
+		moduleExports,
+		"return __exports;",
+		"});"
 
 class Generator
 	generate: (node, blockDepth=0) ->
