@@ -63,7 +63,9 @@ generators =
 		s += indents(blockDepth) + "}"
 		return s
 
-	require: binaryGenerator (path, binding, blockDepth) ->
+	require: ({children, handled}, blockDepth) ->
+		[path, binding] = children
+		return "/* top level require: #{@generate path} => #{@generate binding} */" if handled
 		return "#{@generate binding, blockDepth} = require(#{@generate path, blockDepth})"
 
 	do: ({children}, blockDepth) ->
@@ -73,10 +75,23 @@ generators =
 		s += indents(blockDepth) + "}"
 		return s
 
-	module: ({children}, blockDepth) ->
+	module: (module, blockDepth) ->
+		{children} = module
+		topLevelBindings = []
+		topLevelPaths = []
+		traverse = (node) ->
+			if node.type is "require"
+				[path, binding] = node.children
+				topLevelBindings.push binding
+				topLevelPaths.push path
+				node.handled = true
+			else if node.type isnt "fn" and node.children?
+				traverse child for child in node.children
+		traverse module
+
 		lines \
-		"define([],",
-		"function()",
+		"define([#{@commaSeparated topLevelPaths}],",
+		"function(#{@commaSeparated topLevelBindings})",
 		@generate(children[0], blockDepth+1) + ");"
 
 class Generator
