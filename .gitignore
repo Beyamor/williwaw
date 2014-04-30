@@ -2,4 +2,5 @@
 /js/
 *.sw[op]
 src/lexer-test.coffee
+src/parser-test.coffee
 *.swn
