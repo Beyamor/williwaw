@@ -44,10 +44,10 @@ class TokenStream
 	constructor: (@tokens, @index=0) ->
 
 	peek: ->
-		@tokens[@index]
+		@tokens[Math.min(@index, @tokens.length - 1)]
 
 	pop: ->
-		token = @tokens[@index]
+		token = @peek()
 		++@index
 		return token
 
@@ -172,10 +172,7 @@ language =
 							@expect "," unless @tokens.peek().type is ")"
 			params = new Node "params", params
 			@expect "->"
-			body = @parse [
-				"expressionBlock"
-				"indentedBlock"
-			]
+			body = @parse "block"
 			return new Node "fn", [params, body]
 
 		objectLiteral: ->
@@ -203,46 +200,40 @@ language =
 			expression = @parse "expression"
 			return new Node "do", [expression]
 
-		indentedBlock: ->
-			@indented =>
-				block = []
-				while @tokens.peek().type isnt "dedent"
+		statements: ->
+			block = []
+			while @tokens.peek()? and @tokens.peek().type isnt "dedent" and @tokens.peek().type isnt "eof"
+				@skippingNewlines =>
 					statement = @parse "statement"
 					block.push statement
-				return new Node "do", block
-			
-		topLevelRequire: ->
-			@expectText "require"
-			path = @parse "string"
-			@expectText "as"
-			identifier = @parse "identifier"
-			return new Node "require", [path, identifier]
-
-		topLevelAssignment: ->
-			identifier = @parse "identifier"
-			@expect "="
-			value = @parse "expression"
-			return new Node "assign", [identifier, value]
-
-		topLevelStatements: ->
-			block = []
-			@until "eof", =>
-				@skippingNewlines =>
-					statement = @parse [
-						"topLevelRequire"
-						"topLevelAssignment"
-						"expression"
-					]
-					@expect "newline"
-					block.push statement
-			@expect "eof"
 			return new Node "do", block
 
+		indentedBlock: ->
+			@indented => @parse "statements"
+
+		block: ->
+			@parse ["indentedBlock", "expressionBlock"]
+							
 		assignment: ->
 			identifier = @parse "identifier"
 			@expect "="
 			value = @parse "expression"
 			return new Node "assign", [identifier, value]
+
+		if: ->
+			@expectText "if"
+			condition = @parse "expression"
+			ifTrue = @parse "block"
+			hasElse = @check =>
+				@skipNewlines()
+				@tokens.peek().text is "else"
+			if hasElse
+				@skipNewlines()
+				@expectText "else"
+				ifFalse = @parse "block"
+				return new Node "if", [condition, ifTrue, ifFalse]
+			else
+				return new Node "if", [condition, ifTrue]
 
 		require: ->
 			@expectText "require"
@@ -253,16 +244,20 @@ language =
 
 		statement: ->
 			thing = @parse [
+				"if"
 				"require"
 				"assignment"
 				"expression"
 			]
-			@expect "newline"
+			@parse "terminator"
 			return thing
 
+		terminator: ->
+			@expect ["newline", "eof"]
+
 		module: (tokens) ->
-			block = @parse "topLevelStatements"
-			return new Node "module", [block]
+			body = @parse "statements"
+			return new Node "module", [body]
 
 class Parser
 	parseItUp: (tokens) ->
@@ -317,7 +312,11 @@ class Parser
 	expect: (expectedTypes...) ->
 		for expectedType in expectedTypes
 			token = @tokens.pop()
-			@failOn token unless token? and token.type is expectedType
+			@failOn token unless token?
+			if Array.isArray expectedType
+				@failOn token unless expectedType.indexOf(token.type) isnt -1
+			else
+				@failOn token unless token.type is expectedType
 		return token
 
 	expectText: (expectedTexts...) ->
@@ -356,6 +355,16 @@ class Parser
 
 	failOn: (token) ->
 		throw new ParseError "Error on line #{token.line}: Unexpected '#{token}'"
+
+	check: (body) ->
+		try
+			@tokens.setMark()
+			result = body()
+			return result
+		catch e
+			return false
+		finally
+			@tokens.restoreMark()
 
 exports.parse = (tokens) ->
 	(new Parser).parseItUp tokens

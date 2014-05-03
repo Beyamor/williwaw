@@ -33,3 +33,10 @@ noArgs = -> noArgs
 
 console.log(2 ** 3)
 
+if true
+	console.log("true!")
+
+if false
+	console.log("nope!")
+else
+	console.log("false!")

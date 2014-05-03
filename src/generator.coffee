@@ -75,11 +75,26 @@ generators =
 		node.scope = []
 		[params, body] = node.children
 		params = @generate params, blockDepth
-		body = @generate body, blockDepth
+		body = @generate body, blockDepth + 1
 		"function (#{params}) {\n" +
-			declarations(node.scope, blockDepth) +
+			declarations(node.scope, blockDepth + 1) +
 			"#{body}" +
 		"}"
+
+	if: (node, blockDepth) ->
+		[condition, ifTrue, ifFalse] = node.children
+		s = ""
+		s += lines \
+			indents(blockDepth) + "if (#{@generate condition, blockDepth}) {",
+			indents(blockDepth) + "#{@generate ifTrue, blockDepth + 1}",
+			indents(blockDepth) + "}"
+		if ifFalse?
+			s += "\n"
+			s += lines \
+				indents(blockDepth) + "else {",
+				indents(blockDepth) + "#{@generate ifFalse, blockDepth + 1}",
+				indents(blockDepth) + "}"
+		return s
 
 	property: binaryGenerator (lhs, rhs, blockDepth) ->
 		"#{@generate lhs, blockDepth}: #{@generate rhs, blockDepth}"
@@ -87,7 +102,7 @@ generators =
 	object: ({children}, blockDepth) ->
 		s = "{\n"
 		for child, index in children
-			s += indents(blockDepth) + "#{@generate child, blockDepth + 1}"
+			s += indents(blockDepth + 1) + "#{@generate child, blockDepth + 1}"
 			s += "," if index < children.length - 1
 			s += "\n"
 		s += indents(blockDepth - 1) + "}"
@@ -132,7 +147,7 @@ generators =
 
 		moduleExports = topLevelAssignments.map((id) => @generate id).map((id) => "__exports.#{id} = #{id};").join("\n")
 
-		body = @generate children[0], blockDepth + 1
+		body = @generate children[0], blockDepth
 
 		lines \
 		"define([#{@commaSeparated topLevelPaths}],",

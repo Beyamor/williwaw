@@ -30,13 +30,7 @@ class Lexer
 
 		@o /[a-zA-Z][a-zA-Z0-9_]*/, (name) =>
 			@push "identifier", name
-
-		@o /$/, =>
-			while @indentStack[0] > 0
-				@push "dedent"
-				@indentStack.shift()
-			@push "eof"
-
+			
 	o: (pattern, handler) ->
 		flags = "g"
 		flags += "m" if pattern.multiline
@@ -68,9 +62,16 @@ class Lexer
 					handle matchText
 					@line += (matchText.match(/\n/g) || []).length
 					startIndex += matchText.length
+					if matchText.length > 0
+						break
 
 			unless matched
 				throw new Error "Can't tokenize character '#{text[startIndex]}'"
+
+		while @indentStack[0] > 0
+				@push "dedent"
+				@indentStack.shift()
+			@push "eof"
 
 		return @tokens
 
