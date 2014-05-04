@@ -20,6 +20,7 @@ describe "the lexer", ->
 	it "should lex identifiers", ->
 		assert.lex "derp", ["derp"]
 		assert.lex "derp_", ["derp_"]
+		assert.lex "_derp", ["_derp"]
 		assert.lex "derp0", ["derp0"]
 
 	it "should lex strings", ->
@@ -56,3 +57,6 @@ describe "the lexer", ->
 				"indent", "x", "newline", "dedent",
 				"else", "newline",
 				"indent", "y", "newline", "dedent"]
+
+	it "should reject unlexable symbols", ->
+		assert.throws (-> lex "&something"), Error

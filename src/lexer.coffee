@@ -15,20 +15,26 @@ class Lexer
 				@indentStack.shift()
 
 		@o /[ 	]+/, =>
+			@consume()
 
 		@o /".*"/, (contents) =>
+			@consume()
 			@push "string", contents
 
 		@o /\n/, =>
+			@consume()
 			@push "newline"
 
 		@o /\*\*=|\+=|-=|\*=|\/=|->|\(|\)|\||\+|-|\*\*|\*|\/|==|!=|>|>=|<|<=|=|{|}|\.|:/, (symbol) =>
+			@consume()
 			@push symbol
 
 		@o /[0-9]+(\.[0-9]+)?/, (number) =>
+			@consume()
 			@push "number", number
 
-		@o /[a-zA-Z][a-zA-Z0-9_]*/, (name) =>
+		@o /[a-zA-Z_][a-zA-Z0-9_]*/, (name) =>
+			@consume()
 			@push "identifier", name
 			
 	o: (pattern, handler) ->
@@ -52,21 +58,19 @@ class Lexer
 
 		startIndex = 0
 		while startIndex < text.length
-			matched = false
+			@consumed = false
 			for [pattern, handle] in @rules
 				pattern.lastIndex = startIndex
 				match = pattern.exec text
 				if match? and match.index is startIndex
-					matched = true
 					matchText = match[0]
 					handle matchText
 					@line += (matchText.match(/\n/g) || []).length
-					startIndex += matchText.length
-					if matchText.length > 0
+					if @consumed
+						startIndex += matchText.length
 						break
 
-			unless matched
-				throw new Error "Can't tokenize character '#{text[startIndex]}'"
+			throw new Error "Can't tokenize character '#{text[startIndex]}'" unless @consumed
 
 		while @indentStack[0] > 0
 				@push "dedent"
@@ -74,6 +78,9 @@ class Lexer
 			@push "eof"
 
 		return @tokens
+
+	consume: ->
+		@consumed = true
 
 exports.lex = (text) ->
 	(new Lexer).lex text
