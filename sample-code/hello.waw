@@ -40,3 +40,14 @@ if false
 	console.log("nope!")
 else
 	console.log("false!")
+
+testArgs = (someArg) ->
+	s = ""
+	s = s + someArg + ": "
+	if someArg
+		s = s + "true"
+	else
+		s = s + "false"
+	console.log(s)
+
+testArgs(1 > 2)
