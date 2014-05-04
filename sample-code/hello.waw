@@ -42,12 +42,11 @@ else
 	console.log("false!")
 
 testArgs = (someArg) ->
-	s = ""
-	s = s + someArg + ": "
+	s = "" + someArg + ": "
 	if someArg
-		s = s + "true"
+		s += "true"
 	else
-		s = s + "false"
+		s += "false"
 	console.log(s)
 
 testArgs(1 > 2)

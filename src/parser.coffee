@@ -95,6 +95,13 @@ language =
 			"<=":	"comparison"
 			"**":	"exponentiation"
 
+	operatorAssignmentOperators:
+		"+=":	"+"
+		"-=":	"-"
+		"*=":	"*"
+		"/=":	"/"
+		"**=":	"**"
+
 	prefixParselets:
 		true: ->
 			@expectText "true"
@@ -208,6 +215,15 @@ language =
 			value = @parse "expression"
 			return new Node "assign", [identifier, value]
 
+		operatorAssignment: ->
+			identifier = @parse "identifier"
+			possibleAssignmentOperators = Object.keys language.operatorAssignmentOperators
+			operatorToken = @expect possibleAssignmentOperators
+			operator = language.operatorAssignmentOperators[operatorToken.type]
+			value = @parse "expression"
+			fullExpression = new Node operator, [identifier, value]
+			return new Node "assign", [identifier, fullExpression]
+
 		if: ->
 			@expectText "if"
 			condition = @parse "expression"
@@ -235,6 +251,7 @@ language =
 				"if"
 				"require"
 				"assignment"
+				"operatorAssignment"
 				"expression"
 			]
 			@parse "terminator" if @tokens.last().type isnt "dedent"
