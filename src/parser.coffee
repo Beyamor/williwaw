@@ -248,10 +248,16 @@ language =
 			identifier = @parse "identifier"
 			return new Node "require", [path, identifier]
 
+		return: ->
+			@expectText "return"
+			value = @parse "expression"
+			return new Node "return", [value]
+
 		statement: ->
 			thing = @parse [
 				"if"
 				"require"
+				"return"
 				"assignment"
 				"operatorAssignment"
 				"expression"

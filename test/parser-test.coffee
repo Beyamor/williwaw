@@ -143,3 +143,10 @@ describe "the parser", ->
 		assert.parse text, [["object",
 					["property", "foo", "1"],
 					["property", "bar", "\"bar\""]]]
+
+	it "should parse return statements", ->
+		text =
+			"(x) ->\n" +
+			"	return x\n"
+		assert.parse text, [["fn", ["params", "x"],
+					["do", ["return", "x"]]]]

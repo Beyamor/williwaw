@@ -117,14 +117,14 @@ generators =
 		@write ": "
 		@generateNode rhs
 
-	object: ({children}, blockDepth) ->
+	object: ({children}) ->
 		@inBlock =>
 			for child, index in children
 				@writeLine =>
 					@generateNode child
 					@write "," if index < children.length - 1
 
-	require: (node, blockDepth) ->
+	require: (node) ->
 		[path, binding] = node.children
 		if node.handled
 			@write "/* #{binding.value} hoisted to module definition */"
@@ -133,6 +133,10 @@ generators =
 			@write " = require("
 			@generateNode path
 			@write ")"
+
+	return: (node) ->
+		@write "return "
+		@generateNode node.children[0]
 
 	do: ({children}, blockDepth) ->
 		for child in children

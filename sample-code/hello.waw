@@ -16,6 +16,9 @@ o = {
 foo(o.x)
 bar(o.y)
 
+add = (x, y) ->
+	return x + y
+
 console.log(colors.red("check these colours"))
 
 someModule.someFunction()
