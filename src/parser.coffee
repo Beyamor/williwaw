@@ -68,11 +68,6 @@ class TokenStream
 		throw new Error "No previous token" unless @index > 0
 		@tokens[@index - 1]
 
-binaryOp = (op) ->
-	(lhs) ->
-		rhs = @parse parselet: "expression", args: [@getPredence op]
-		return new Node op, [lhs, rhs]
-
 language =
 	precedences:
 		ordering: [
@@ -137,17 +132,6 @@ language =
 		".": (lhs) ->
 			rhs = @parse "identifier"
 			return new Node "get", [lhs, rhs]
-
-		"+": binaryOp "+"
-		"-": binaryOp "-"
-		"*": binaryOp "*"
-		"/": binaryOp "/"
-		"==": binaryOp "=="
-		"!=": binaryOp "!="
-		">": binaryOp ">"
-		">=": binaryOp ">="
-		"<": binaryOp "<"
-		"<=": binaryOp "<="
 
 		"**": (lhs) ->
 			rhs = @parse "expression", @getPredence "**"
@@ -262,6 +246,12 @@ language =
 		module: (tokens) ->
 			body = @parse "statements"
 			return new Node "module", [body]
+
+for op in ["+", "-", "*", "/",  "==", "!=", ">", ">=", "<", "<="]
+	do (op) ->
+		language.infixParselets[op] = (lhs) ->
+			rhs = @parse parselet: "expression", args: [@getPredence op]
+			return new Node op, [lhs, rhs]
 
 class Parser
 	parseItUp: (tokens) ->
