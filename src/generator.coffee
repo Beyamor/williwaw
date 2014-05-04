@@ -14,12 +14,6 @@ directBinaryOperator = ({type, children}) ->
 	@generateNode rhs
 	@write ")"
 
-declarations = (scope) ->
-	if scope.length > 0
-		@writeTerminatedLine "var #{scope.join(", ")}"
-	else
-		""
-
 processors =
 	require: (node, blockDepth) ->
 		unless node.handled?
