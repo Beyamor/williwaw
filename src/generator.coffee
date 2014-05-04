@@ -218,11 +218,12 @@ class Generator
 			@writeTerminatedLine "var #{scope.join(", ")}"
 
 	inBlock: (body) ->
-		@blockDepth += 1
 		@write "{\n"
+		@blockDepth += 1
 		body.call this
-		@write "}"
 		@blockDepth -= 1
+		@indent()
+		@write "}"
 
 exports.generate = (root) ->
 	(new Generator).generate(root)
