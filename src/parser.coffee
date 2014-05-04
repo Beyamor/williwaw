@@ -64,6 +64,10 @@ class TokenStream
 	dropMark: ->
 		@marks.pop()
 
+	last: ->
+		throw new Error "No previous token" unless @index > 0
+		@tokens[@index - 1]
+
 binaryOp = (op) ->
 	(lhs) ->
 		rhs = @parse parselet: "expression", args: [@getPredence op]
@@ -203,9 +207,9 @@ language =
 		statements: ->
 			block = []
 			while @tokens.peek()? and @tokens.peek().type isnt "dedent" and @tokens.peek().type isnt "eof"
-				@skippingNewlines =>
-					statement = @parse "statement"
-					block.push statement
+				@skipNewlines()
+				statement = @parse "statement"
+				block.push statement
 			return new Node "do", block
 
 		indentedBlock: ->
@@ -249,7 +253,7 @@ language =
 				"assignment"
 				"expression"
 			]
-			@parse "terminator"
+			@parse "terminator" if @tokens.last().type isnt "dedent"
 			return thing
 
 		terminator: ->
