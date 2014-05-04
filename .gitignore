@@ -1,6 +1,6 @@
 /bin/
 /js/
 *.sw[op]
-src/lexer-test.coffee
-src/parser-test.coffee
+src/lexer-runner.coffee
+src/parser-runner.coffee
 *.swn
