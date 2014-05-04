@@ -25,7 +25,7 @@ class Lexer
 			@consume()
 			@push "newline"
 
-		@o /\*\*=|\+=|-=|\*=|\/=|->|\(|\)|\||\+|-|\*\*|\*|\/|==|!=|>|>=|<|<=|=|{|}|\.|:/, (symbol) =>
+		@o /\*\*=|\+=|-=|\*=|\/=|->|\(|\)|\||\+|-|\*\*|\*|\/|==|!=|>|>=|<|<=|=|{|}|\.|:|,/, (symbol) =>
 			@consume()
 			@push symbol
 
@@ -36,7 +36,7 @@ class Lexer
 		@o /[a-zA-Z_][a-zA-Z0-9_]*/, (name) =>
 			@consume()
 			@push "identifier", name
-			
+
 	o: (pattern, handler) ->
 		flags = "g"
 		flags += "m" if pattern.multiline

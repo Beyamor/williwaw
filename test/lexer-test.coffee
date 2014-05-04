@@ -60,3 +60,6 @@ describe "the lexer", ->
 
 	it "should reject unlexable symbols", ->
 		assert.throws (-> lex "&something"), Error
+
+	it "should tokenize commas", ->
+		assert.lex ",", [","]
