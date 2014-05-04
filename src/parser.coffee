@@ -171,8 +171,9 @@ language =
 			return new Node "fn", [params, body]
 
 		objectLiteral: ->
+			properties = []
+			@expect "{"
 			@indented =>
-				properties = []
 				@until "dedent", =>
 					property = @parse [
 						"identifier"
@@ -182,7 +183,8 @@ language =
 					value = @parse "expression"
 					@expect "newline"
 					properties.push new Node "property", [property, value]
-				return new Node "object", properties
+			@expect "}"
+			return new Node "object", properties
 
 		expression: (minPrecedence=0) ->
 			@parse [

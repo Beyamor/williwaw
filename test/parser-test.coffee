@@ -133,3 +133,13 @@ describe "the parser", ->
 
 	it "should parse requires", ->
 		assert.parse 'require "whatever" as whatever', [["require", '"whatever"', "whatever"]]
+
+	it "should parse multiline object literals", ->
+		text =
+			"{\n" +
+			"	foo: 1\n" +
+			"	bar: \"bar\"\n" +
+			"}\n"
+		assert.parse text, [["object",
+					["property", "foo", "1"],
+					["property", "bar", "\"bar\""]]]
