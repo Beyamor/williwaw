@@ -1,40 +1,57 @@
-lines = (args...) ->
-	args.join("\n")
-
 valueGenerator = ({value}) ->
-	value
+	@write value
 
 binaryGenerator = (f) ->
-	({children}, blockDepth) ->
+	({children}) ->
 		[lhs, rhs] = children
-		f.call(this, lhs, rhs, blockDepth)
+		f.call(this, lhs, rhs)
 
-directBinaryOperator = ({type, children}, blockDepth) ->
+directBinaryOperator = ({type, children}) ->
 	[lhs, rhs] = children
-	return "(#{@generate lhs, blockDepth} #{type} #{@generate rhs, blockDepth})"
+	@write "("
+	@generateNode lhs
+	@write " #{type} "
+	@generateNode rhs
+	@write ")"
 
-indents = (blockDepth) ->
-	new Array(blockDepth).join("	")
-
-declare = (identifier, node) ->
-	nearestScope = null
-	previouslyDeclared = false
-	while node?
-		if node.scope?
-			if node.scope.indexOf(identifier) isnt -1
-				previouslyDeclared = true
-				break
-			else
-				nearestScope = node.scope unless nearestScope
-		node = node.parent
-	unless previouslyDeclared
-		nearestScope.push identifier
-
-declarations = (scope, blockDepth) ->
+declarations = (scope) ->
 	if scope.length > 0
-		indents(blockDepth) + "var #{scope.join(", ")};\n"
+		@writeTerminatedLine "var #{scope.join(", ")}"
 	else
 		""
+
+processors =
+	require: (node, blockDepth) ->
+		unless node.handled?
+			[path, binding] = node.children
+			@declare binding, node
+
+	assign: (node) ->
+		[lhs, rhs] = node.children
+		@declare lhs, node
+
+	fn: (node) ->
+		node.scope = []
+	
+	module: (module) ->
+		module.scope = []
+		module.topLevelBindings = []
+		module.topLevelPaths = []
+		module.topLevelAssignments = []
+		traverse = (node) ->
+			if node.type is "require"
+				[path, binding] = node.children
+				module.topLevelBindings.push binding
+				module.topLevelPaths.push path
+				node.handled = true
+			else if node.type is "assign"
+				[identifier] = node.children
+				module.topLevelAssignments.push identifier
+
+			if node.type isnt "fn" and node.type isnt "require" and node.type isnt "assign" and node.children?
+				traverse child for child in node.children
+		traverse module
+
 generators =
 	identifier: valueGenerator
 	string: valueGenerator
@@ -51,22 +68,30 @@ generators =
 	"<": directBinaryOperator
 	"<=": directBinaryOperator
 
-	"**": binaryGenerator (lhs, rhs, blockDepth) ->
-		"(Math.pow(#{@generate lhs, blockDepth}, #{@generate rhs, blockDepth}))"
+	"**": binaryGenerator (lhs, rhs) ->
+		@write "(Math.pow("
+		@generateNode lhs
+		@write ", "
+		@generateNode rhs
+		@write "))"
 
-	assign: (node, blockDepth) ->
+	assign: (node) ->
 		[lhs, rhs] = node.children
-		lhs = @generate lhs, blockDepth
-		rhs = @generate rhs, blockDepth
-		declare lhs, node
-		"#{lhs} = #{rhs}"
+		@generateNode lhs
+		@write " = "
+		@generateNode rhs
 
 	get: binaryGenerator (lhs, rhs, blockDepth) ->
-		"#{@generate lhs, blockDepth}.#{@generate rhs, blockDepth}"
+		@generateNode lhs
+		@write "."
+		@generateNode rhs
 
 	call: ({children}, blockDepth) ->
 		[f, args...] = children
-		return "#{@generate f, blockDepth}(#{@commaSeparated args})"
+		@generateNode f
+		@write "("
+		@commaSeparated args
+		@write ")"
 
 	params: ({children}, blockDepth) ->
 		@commaSeparated children
@@ -74,99 +99,136 @@ generators =
 	fn: (node, blockDepth) ->
 		node.scope = []
 		[params, body] = node.children
-		params = @generate params, blockDepth
-		body = @generate body, blockDepth + 1
-		"function (#{params}) {\n" +
-			declarations(node.scope, blockDepth + 1) +
-			"#{body}" +
-		"}"
+		@write "function ("
+		@generateNode params
+		@write ") "
+		@inBlock =>
+			@declareVariablesIn node.scope
+			@generateNode body
 
 	if: (node, blockDepth) ->
 		[condition, ifTrue, ifFalse] = node.children
-		s = ""
-		s += lines \
-			indents(blockDepth) + "if (#{@generate condition, blockDepth}) {",
-			indents(blockDepth) + "#{@generate ifTrue, blockDepth + 1}",
-			indents(blockDepth) + "}"
+		@write "if ("
+		@generateNode condition
+		@write ") "
+		@inBlock =>
+			@generateNode ifTrue
 		if ifFalse?
-			s += "\n"
-			s += lines \
-				indents(blockDepth) + "else {",
-				indents(blockDepth) + "#{@generate ifFalse, blockDepth + 1}",
-				indents(blockDepth) + "}"
-		return s
+			@write " else "
+			@inBlock =>
+				@generateNode ifFalse
 
-	property: binaryGenerator (lhs, rhs, blockDepth) ->
-		"#{@generate lhs, blockDepth}: #{@generate rhs, blockDepth}"
+	property: binaryGenerator (lhs, rhs) ->
+		@generateNode lhs
+		@write ": "
+		@generateNode rhs
 
 	object: ({children}, blockDepth) ->
-		s = "{\n"
-		for child, index in children
-			s += indents(blockDepth + 1) + "#{@generate child, blockDepth + 1}"
-			s += "," if index < children.length - 1
-			s += "\n"
-		s += indents(blockDepth - 1) + "}"
-		return s
+		@inBlock =>
+			for child, index in children
+				@writeLine =>
+					@generateNode child
+					@write "," if index < children.length - 1
 
 	require: (node, blockDepth) ->
 		[path, binding] = node.children
-		path = @generate path, blockDepth
-		binding = @generate binding, blockDepth
 		if node.handled
-			return "/* top level require: #{path} => #{binding} */"
+			@write "/* #{binding.value} hoisted to module definition */"
 		else
-			declare binding, node
-			return "#{binding} = require(#{path})"
+			@generateNode binding
+			@write " = require("
+			@generateNode path
+			@write ")"
 
 	do: ({children}, blockDepth) ->
-		s = ""
 		for child in children
-			s += indents(blockDepth) + "#{@generate child, blockDepth + 1};\n"
-		return s
+			@writeAsTerminatedLine => @generateNode child
 
-	module: (module, blockDepth) ->
-		module.scope = []
-		{children} = module
-		topLevelBindings = []
-		topLevelPaths = []
-		topLevelAssignments = []
-
-		traverse = (node) ->
-			if node.type is "require"
-				[path, binding] = node.children
-				topLevelBindings.push binding
-				topLevelPaths.push path
-				node.handled = true
-			else if node.type is "assign"
-				[identifier] = node.children
-				topLevelAssignments.push identifier
-
-			if node.type isnt "fn" and node.type isnt "require" and node.type isnt "assign" and node.children?
-				traverse child for child in node.children
-		traverse module
-
-		moduleExports = topLevelAssignments.map((id) => @generate id).map((id) => "__exports.#{id} = #{id};").join("\n")
-
-		body = @generate children[0], blockDepth
-
-		lines \
-		"define([#{@commaSeparated topLevelPaths}],",
-		"function(#{@commaSeparated topLevelBindings}){",
-		"var __exports = {};",
-		declarations(module.scope, blockDepth),
-		body,
-		moduleExports,
-		"return __exports;",
-		"});"
+	module: (module) ->
+		{topLevelAssignments, topLevelBindings, topLevelPaths} = module
+		@write "define(["
+		@commaSeparated topLevelPaths
+		@write "],\n"
+		@write "function("
+		@commaSeparated topLevelBindings
+		@write "){\n"
+		@writeTerminatedLine "var __exports = {}"
+		@declareVariablesIn module.scope
+		@generateNode module.children[0]
+		for topLevelAssignment in topLevelAssignments
+			id = topLevelAssignment.value
+			@writeTerminatedLine "__exports.#{id} = #{id}"
+		@writeTerminatedLine "return __exports"
+		@writeTerminatedLine "})"
 
 class Generator
-	generate: (node, blockDepth=0) ->
+	process: (node) ->
+		if processors[node.type]?
+			processors[node.type].call this, node
+		if node.children?
+			@process child for child in node.children
+
+	generate: (root) ->
+		@text = ""
+		@blockDepth = 0
+		@process root
+		@generateNode root
+		return @text
+	
+	generateNode: (node) ->
+		throw new Error "No node type for #{node}" unless node.type?
 		generator = generators[node.type]
 		throw new Error "No generator for #{node.type}" unless generator?
-		return generator.call this, node, blockDepth
+		generator.call this, node
+
+	write: (text) ->
+		@text += text
+
+	writeTerminatedLine: (text) ->
+		@writeAsTerminatedLine => @write text
+	
+	indent: ->
+		@write (new Array(@blockDepth + 1)).join("\t")
+
+	writeAsTerminatedLine: (body) ->
+		@indent()
+		body()
+		@write ";\n"
+
+	writeLine: (body) ->
+		@indent()
+		body()
+		@write "\n"
+
+	declare: (identifier, node) ->
+		nearestScope = null
+		previouslyDeclared = false
+		while node?
+			if node.scope?
+				if node.scope.indexOf(identifier) isnt -1
+					previouslyDeclared = true
+					break
+				else
+					nearestScope = node.scope unless nearestScope
+			node = node.parent
+		unless previouslyDeclared
+			nearestScope.push identifier.value
 
 	commaSeparated: (nodes) ->
-		nodes.map((node) => @generate node, 0).join(", ")
+		for node, index in nodes
+			@generateNode node
+			@write ", " if index < nodes.length - 1
 
-exports.generate = (tree) ->
-	(new Generator).generate(tree)
+	declareVariablesIn: (scope) ->
+		if scope.length isnt 0
+			@writeTerminatedLine "var #{scope.join(", ")}"
+
+	inBlock: (body) ->
+		@blockDepth += 1
+		@write "{\n"
+		body.call this
+		@write "}"
+		@blockDepth -= 1
+
+exports.generate = (root) ->
+	(new Generator).generate(root)
